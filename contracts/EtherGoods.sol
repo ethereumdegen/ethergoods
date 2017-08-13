@@ -25,6 +25,7 @@ contract EtherGoodsMarket {
 				//addresses of the people who own the good
 
 				mapping (uint => address) supplyIndexToAddress;
+        mapping (address => uint256) balanceOf;
 
 
 				// A record of supplies that are offered for sale at a specific minimum value, and perhaps to a specific person
@@ -69,7 +70,7 @@ contract EtherGoodsMarket {
 		event ModifyClaimsPrice(address indexed owner,uint price,uint256 goodHash);
 
     event ClaimGood(address indexed to, uint256 goodHash, uint supplyIndex);
-
+    event TransferSupply(uint256 indexed uniqueHash,address indexed from, address indexed to, uint amount);
 
   	event SupplyOffered(uint256 indexed uniqueHash, uint indexed supplyIndex, uint minValue, address indexed toAddress);
     event SupplyBidEntered(uint256 indexed uniqueHash, uint indexed supplyIndex, uint value, address indexed fromAddress);
@@ -148,11 +149,13 @@ contract EtherGoodsMarket {
 		function claimGood(uint256 uniqueHash)
 		{
 			if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
-			if(goods[uniqueHash].nextSupplyIndexToSell >= goods[uniqueHash].totalSupply) revert(); //the the good is all sold out
+			if(goods[uniqueHash].nextSupplyIndexToSell >= goods[uniqueHash].totalSupply) revert(); // the good is all claimed
 
 
 
 			goods[uniqueHash].supplyIndexToAddress[goods[uniqueHash].nextSupplyIndexToSell] = msg.sender;
+
+      goods[uniqueHash].balanceOf[msg.sender]++;
 
 			ClaimGood(msg.sender, uniqueHash, goods[uniqueHash].nextSupplyIndexToSell );
 
@@ -214,9 +217,9 @@ contract EtherGoodsMarket {
         address seller = offer.seller;
 
 				goods[uniqueHash].supplyIndexToAddress[supplyIndex] = msg.sender; //set the new owner of the supply
-      //  balanceOf[seller]--;
-    	// balanceOf[msg.sender]++;
-      //  TransferSupply(seller, msg.sender, 1);
+        goods[uniqueHash].balanceOf[seller]--;
+      	goods[uniqueHash].balanceOf[msg.sender]++;
+        TransferSupply(uniqueHash, seller, msg.sender, 1);
 
         SupplyNoLongerForSale(uniqueHash,supplyIndex);
         pendingWithdrawals[seller] += msg.value;
@@ -279,9 +282,9 @@ contract EtherGoodsMarket {
         if (bid.value < minPrice) revert();
 
         goods[uniqueHash].supplyIndexToAddress[supplyIndex] = bid.bidder;
-        //balanceOf[seller]--;
-        //balanceOf[bid.bidder]++;
-        //Transfer(seller, bid.bidder, 1);
+        goods[uniqueHash].balanceOf[seller]--;
+        goods[uniqueHash].balanceOf[bid.bidder]++;
+        TransferSupply(uniqueHash,seller, bid.bidder, 1);
 
         goods[uniqueHash].supplyOfferedForSale[supplyIndex] = Offer(false, uniqueHash, supplyIndex, bid.bidder, 0, 0x0);
         uint amount = bid.value;
