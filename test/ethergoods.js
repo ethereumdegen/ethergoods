@@ -1,7 +1,37 @@
 var EtherGoods = artifacts.require("./EtherGoods.sol");
 var sha3_256 = require('js-sha3').sha3_256;
 
+
+
+/*
+  var expectThrow = async function (promise) {
+    try {
+      await promise;
+    } catch (error) {
+      // TODO: Check jump destination to destinguish between a throw
+      //       and an actual invalid jump.
+      const invalidOpcode = error.message.search('invalid opcode') >= 0;
+      const invalidJump = error.message.search('invalid JUMP') >= 0;
+      // TODO: When we contract A calls contract B, and B throws, instead
+      //       of an 'invalid jump', we get an 'out of gas' error. How do
+      //       we distinguish this from an actual out of gas event? (The
+      //       testrpc log actually show an 'invalid jump' event.)
+      const outOfGas = error.message.search('out of gas') >= 0;
+      assert(
+        invalidOpcode || invalidJump || outOfGas,
+        "Expected throw, got '" + error + "' instead",
+      );
+      return;
+    }
+    assert.fail('Expected throw not received');
+  }; */
+
+
 contract('EtherGoods', function(accounts) {
+
+
+
+
 
 /*
   it("should register a new good", function() {
@@ -23,7 +53,13 @@ contract('EtherGoods', function(accounts) {
   var unique_hash = sha3_256("canoeasset");
   await contract.registerNewGood(accounts[0],unique_hash,"canoe","A wooden boat",5,400);
 
-  assert.equal(contract.goods[unique_hash].initialized, true );
+
+  var good_record = await contract.goods.call(unique_hash);
+
+  console.log("Record");
+   console.log("Good: " + good_record);
+
+  assert.equal(true, good_record[0]);
 
 /*
   var offer = await contract.punksOfferedForSale.call(0);
@@ -42,7 +78,7 @@ it("can claim a good", async function () {
   var unique_hash = sha3_256("canoeasset");
   await contract.claimGood(unique_hash);
 
-  assert.equal(contract.goods[unique_hash].balanceOf[accounts[0]], 1 );
+  assert.equal(contract.goods.call(unique_hash).balanceOf.call(accounts[0]), 1 );
 
 }),
 
