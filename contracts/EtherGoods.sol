@@ -1,24 +1,13 @@
 pragma solidity ^0.4.8;
 contract EtherGoodsMarket {
 
-    // You can use this hash to verify the image file containing all the punks
-  //  string public imageHash = "ac39af4793119ee46bbff351d8cb6b5f23da60222126add4268e261199a2921b";
-
     address owner;
 
     string public standard = 'EtherGoods';
     string public name;
     string public symbol;
-    //uint8 public decimals;
-    //uint256 public totalSupply;
-
-    //mapping (address => uint) public addressToPunkIndex;
 
 
-
-
-    /* This creates an array with all balances */
-  //  mapping (address => uint256) public balanceOf;
 
 		struct Good {
 				bool initialized;
@@ -32,20 +21,16 @@ contract EtherGoodsMarket {
 				uint claimPrice;        // in ether
 				bool claimsEnabled;
 
-				//uint public nextPunkIndexToAssign = 0;
-				//bool public allPunksAssigned = false;
-				//bool allInstancesSold = false;
 
 				//addresses of the people who own the good
-			//	mapping (uint => address) addressToSupplyIndex;
 
 				mapping (uint => address) supplyIndexToAddress;
 
 
-				// A record of punks that are offered for sale at a specific minimum value, and perhaps to a specific person
+				// A record of supplies that are offered for sale at a specific minimum value, and perhaps to a specific person
 				mapping (uint => Offer) supplyOfferedForSale;
 
-				// A record of the highest punk bid
+				// A record of the highest  bid
 				mapping (uint => Bid) supplyBids;
 		}
 
@@ -83,7 +68,7 @@ contract EtherGoodsMarket {
 		event ModifyClaimsEnable(address indexed owner,bool enabele,uint256 goodHash);
 		event ModifyClaimsPrice(address indexed owner,uint price,uint256 goodHash);
 
-    event PurchaseGood(address indexed to, uint256 goodHash, uint supplyIndex);
+    event ClaimGood(address indexed to, uint256 goodHash, uint supplyIndex);
 
 
   	event SupplyOffered(uint256 indexed uniqueHash, uint indexed supplyIndex, uint minValue, address indexed toAddress);
@@ -98,12 +83,9 @@ contract EtherGoodsMarket {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function EthergoodsMarket() payable {
         owner = msg.sender;
-        //totalSupply = 10000;                        // Update total supply
-        //punksRemainingToAssign = totalSupply;
-        name = "ETHERGOODS";                                 // Set the name for display purposes
+           name = "ETHERGOODS";                                 // Set the name for display purposes
         symbol = "EGS";                     			          // Set the symbol for display purposes
-    //    decimals = 0;                                       // Amount of decimals for display purposes
-    }
+     }
 
 
 		function registerNewGood(address to, uint256 uniqueHash, string name, string description, uint totalSupply, uint claimPrice )
@@ -172,7 +154,7 @@ contract EtherGoodsMarket {
 
 			goods[uniqueHash].supplyIndexToAddress[goods[uniqueHash].nextSupplyIndexToSell] = msg.sender;
 
-			PurchaseGood(msg.sender, uniqueHash, goods[uniqueHash].nextSupplyIndexToSell );
+			ClaimGood(msg.sender, uniqueHash, goods[uniqueHash].nextSupplyIndexToSell );
 
 			goods[uniqueHash].nextSupplyIndexToSell++;
 
@@ -184,14 +166,11 @@ contract EtherGoodsMarket {
 
 
 		function offerSupplyForSale(uint256 uniqueHash, uint supplyIndex, uint minSalePriceInWei) {
-        //if (!allPunksAssigned) revert();
-				if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
+         if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
         if(goods[uniqueHash].supplyIndexToAddress[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
         if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
 
 				goods[uniqueHash].supplyOfferedForSale[supplyIndex] = Offer(true, uniqueHash, supplyIndex, msg.sender, minSalePriceInWei, 0x0);
-			  //punksOfferedForSale[punkIndex] = Offer(true, punkIndex, msg.sender, minSalePriceInWei, 0x0);
-        //PunkOffered(punkIndex, minSalePriceInWei, 0x0);
 				SupplyOffered(uniqueHash,supplyIndex, minSalePriceInWei, 0x0);
     }
 
@@ -224,14 +203,13 @@ contract EtherGoodsMarket {
 
 
     function buySupply(uint256 uniqueHash, uint supplyIndex) payable {
-      //  if (!allPunksAssigned) revert();  we dont care if supply hasnt all been claimed
-				if(!goods[uniqueHash].initialized) revert();
+    		if(!goods[uniqueHash].initialized) revert();
         Offer offer = goods[uniqueHash].supplyOfferedForSale[supplyIndex];
         if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
         if (!offer.isForSale) revert();                // supply not actually for sale
-        if (offer.onlySellTo != 0x0 && offer.onlySellTo != msg.sender) revert();  // punk not supposed to be sold to this user
+        if (offer.onlySellTo != 0x0 && offer.onlySellTo != msg.sender) revert();  //  not supposed to be sold to this user
         if (msg.value < offer.minValue) revert();      // Didn't send enough ETH
-        if (offer.seller != goods[uniqueHash].creator) revert(); // Seller no longer owner of punk
+        if (offer.seller != goods[uniqueHash].creator) revert(); // Seller no longer owner of
 
         address seller = offer.seller;
 
@@ -260,7 +238,6 @@ contract EtherGoodsMarket {
 
 		//this does not have to change
     function withdraw() {
-        //if (!allPunksAssigned) revert();
         uint amount = pendingWithdrawals[msg.sender];
         // Remember to zero the pending refund before
         // sending to prevent re-entrancy attacks
@@ -278,7 +255,6 @@ contract EtherGoodsMarket {
         if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == 0x0) revert();
         if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == msg.sender) revert();
         if (msg.value == 0) revert();
-      //  Bid existing = punkBids[punkIndex];
 				Bid existing = goods[uniqueHash].supplyBids[supplyIndex];
 
         if (msg.value <= existing.value) revert();
@@ -296,7 +272,6 @@ contract EtherGoodsMarket {
 				if(!goods[uniqueHash].initialized) revert();
 				if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
 
-    //    if (!allPunksAssigned) revert();
 				if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == msg.sender) revert();
         address seller = msg.sender;
         Bid bid = goods[uniqueHash].supplyBids[supplyIndex];
@@ -320,8 +295,7 @@ contract EtherGoodsMarket {
 				if(!goods[uniqueHash].initialized) revert();
 				if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
 
-    //    if (!allPunksAssigned) revert();
-				if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == 0x0) revert();
+			   if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == 0x0) revert();
 				if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == msg.sender) revert();
 			  Bid bid = goods[uniqueHash].supplyBids[supplyIndex];
 			  if (bid.bidder != msg.sender) revert();
