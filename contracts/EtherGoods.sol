@@ -35,7 +35,7 @@ contract EtherGoodsMarket {
 				//bool allInstancesSold = false;
 
 				//addresses of the people who own the good
-				mapping (address => uint) public addressToSupplyIndex;
+				mapping (address => uint) addressToSupplyIndex;
 
 		}
 
@@ -110,14 +110,14 @@ contract EtherGoodsMarket {
 			if(goods[uniqueHash].nextSupplyIndexToSell == goods[uniqueHash].totalSupply) revert(); //the the good is all sold out
 
 
-			PurchaseGood(msg.sender, uniqueHash, goods[uniqueHash].nextSupplyIndexToSell )
+			PurchaseGood(msg.sender, uniqueHash, goods[uniqueHash].nextSupplyIndexToSell );
 
 			goods[uniqueHash].addressToSupplyIndex[msg.sender] = goods[uniqueHash].nextSupplyIndexToSell;
 			goods[uniqueHash].nextSupplyIndexToSell++;
 
 
 		}
- 
+
 
 /*
     function setInitialOwner(address to, uint punkIndex) {
