@@ -102,6 +102,7 @@ contract EtherGoods {
 			goods[uniqueHash].description = description;
 			goods[uniqueHash].totalSupply = totalSupply;
 			goods[uniqueHash].nextSupplyIndexToSell = 0;
+      goods[uniqueHash].uniqueHash = uniqueHash;
 
 			goods[uniqueHash].claimPrice = claimPrice; //initial price
 			goods[uniqueHash].claimsEnabled = true;
@@ -164,7 +165,11 @@ contract EtherGoods {
 
 		}
 
-
+    function getSupplyBalance(bytes32 uniqueHash, address to) returns (uint amount)
+    {
+      if(!goods[uniqueHash].initialized) revert();
+      amount = goods[uniqueHash].balanceOf[to];
+    }
 
 
 
@@ -196,11 +201,6 @@ contract EtherGoods {
         goods[uniqueHash].supplyOfferedForSale[supplyIndex] = Offer(false, uniqueHash, supplyIndex, msg.sender, 0, 0x0);
         SupplyNoLongerForSale(uniqueHash,supplyIndex);
     }
-
-
-
-
-
 
 
 

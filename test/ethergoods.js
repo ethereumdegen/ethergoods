@@ -61,15 +61,6 @@ contract('EtherGoods', function(accounts) {
 
   assert.equal(true, good_record[0]);
 
-/*
-  var offer = await contract.punksOfferedForSale.call(0);
-  console.log("Offer: " + offer);
-  assert.equal(true, offer[0], "Punk 0 not for sale");
-  assert.equal(0, offer[1]);
-  assert.equal(accounts[0], offer[2]);
-  assert.equal(1000, offer[3]);
-  assert.equal(NULL_ACCOUNT, offer[4]);
-  */
 }),
 
 it("can claim a good", async function () {
@@ -77,8 +68,17 @@ it("can claim a good", async function () {
 
   var unique_hash = sha3_256("canoeasset");
   await contract.claimGood(unique_hash);
+  await contract.claimGood(unique_hash);
+  await contract.claimGood(unique_hash);
 
-  assert.equal(contract.goods.call(unique_hash).balanceOf.call(accounts[0]), 1 );
+  var good_record = await contract.goods.call(unique_hash);
+
+  var balance_of = await contract.getSupplyBalance.call(unique_hash,accounts[0]);
+
+    console.log("balance");
+    console.log(balance_of);
+
+  assert.equal(1, balance_of );
 
 }),
 
