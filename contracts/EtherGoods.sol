@@ -84,7 +84,7 @@ contract EtherGoods {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function EthergoodsMarket() payable {
         owner = msg.sender;
-           name = "ETHERGOODS";                                 // Set the name for display purposes
+        name = "ETHERGOODS";                                 // Set the name for display purposes
         symbol = "EGS";                     			          // Set the symbol for display purposes
      }
 

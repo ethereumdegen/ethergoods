@@ -1,14 +1,21 @@
-var MetaCoin = artifacts.require("./EtherGoods.sol");
+var EtherGoods = artifacts.require("./EtherGoods.sol");
+var sha3_256 = require('js-sha3').sha3_256;
 
 contract('EtherGoods', function(accounts) {
-  it("should put 10000 MetaCoin in the first account", function() {
+
+  it("should register a new good", function() {
     return EtherGoods.deployed().then(function(instance) {
-      return instance.getBalance.call(accounts[0]);
+    //  return instance.getBalance.call(accounts[0]);
+
+      var unique_hash = sha3_256("lalala");
+      return instance.registerNewGood.call(accounts[0],unique_hash,"canoe","A wooden boat",5);
     }).then(function(balance) {
-      assert.equal(balance.valueOf(), 10000, "10000 wasn't in the first account");
+      var unique_hash = sha3_256("lalala");
+      assert.equal(goods[unique_hash].initialized, true, "Good is registered");
     });
   });
 
+/*
   it("should send coin correctly", function() {
     var meta;
 
@@ -44,4 +51,6 @@ contract('EtherGoods', function(accounts) {
       assert.equal(account_two_ending_balance, account_two_starting_balance + amount, "Amount wasn't correctly sent to the receiver");
     });
   });
+
+  */
 });
