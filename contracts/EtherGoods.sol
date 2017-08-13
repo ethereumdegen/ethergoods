@@ -15,7 +15,6 @@ contract EtherGoodsMarket {
     //mapping (address => uint) public addressToPunkIndex;
 
 
-    mapping (uint256 => address) public creatorAddress;
 
 
     /* This creates an array with all balances */
@@ -29,7 +28,9 @@ contract EtherGoodsMarket {
 				//uint supplyRemaining;
 				uint nextSupplyIndexToSell;
 				uint256 uniqueHash; //The SHA3 hash of the artwork/asset. must be unique
-				uint minPrice;        // in ether
+				uint claimPrice;        // in ether
+				bool claimsEnabled;
+
 				//uint public nextPunkIndexToAssign = 0;
 				//bool public allPunksAssigned = false;
 				//bool allInstancesSold = false;
@@ -37,11 +38,17 @@ contract EtherGoodsMarket {
 				//addresses of the people who own the good
 				mapping (address => uint) addressToSupplyIndex;
 
+				// A record of punks that are offered for sale at a specific minimum value, and perhaps to a specific person
+				mapping (uint => Offer) supplyOfferedForSale;
+
+				// A record of the highest punk bid
+				mapping (uint => Bid) supplyBids;
 		}
 
     struct Offer {
         bool isForSale;
-        uint punkIndex;
+				uint256 uniqueHash
+        uint supplyIndex;
         address seller;
         uint minValue;          // in ether
         address onlySellTo;     // specify to sell only to a specific person
@@ -49,27 +56,32 @@ contract EtherGoodsMarket {
 
     struct Bid {
         bool hasBid;
-        uint punkIndex;
+				uint256 uniqueHash
+				uint supplyIndex;
         address bidder;
         uint value;
     }
 
-		mapping (string => Good) public goods;
+	/*/	mapping (uint256 => address) public creatorAddress;*/
+
+		//the uint256 is the unique hash of the good, SHA3
+		mapping (uint256 => Good) public goods;
 
 
-    // A record of punks that are offered for sale at a specific minimum value, and perhaps to a specific person
-    mapping (uint => Offer) public punksOfferedForSale;
 
-    // A record of the highest punk bid
-    mapping (uint => Bid) public punkBids;
+
+
 
     mapping (address => uint) public pendingWithdrawals;
 
 		event RegisterGood(address indexed to, uint256 goodHash);
+		event RegistrationTransfer(address indexed from, address indexed to, uint256 goodHash);
+		event ModifyClaimsEnable(address indexed owner,bool enabele,uint256 goodHash);
+		event ModifyClaimsPrice(address indexed owner,uint price,uint256 goodHash);
+
     event PurchaseGood(address indexed to, uint256 goodHash, uint supplyIndex);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event PunkTransfer(address indexed from, address indexed to, uint256 punkIndex);
-    event PunkOffered(uint indexed punkIndex, uint minValue, address indexed toAddress);
+
+  	event PunkOffered(uint indexed punkIndex, uint minValue, address indexed toAddress);
     event PunkBidEntered(uint indexed punkIndex, uint value, address indexed fromAddress);
     event PunkBidWithdrawn(uint indexed punkIndex, uint value, address indexed fromAddress);
     event PunkBought(uint indexed punkIndex, uint value, address indexed fromAddress, address indexed toAddress);
@@ -98,16 +110,54 @@ contract EtherGoodsMarket {
 			goods[uniqueHash].description = description;
 			goods[uniqueHash].totalSupply = totalSupply;
 			goods[uniqueHash].nextSupplyIndexToSell = 0;
-			goods[uniqueHash].minPrice = minPrice;
+
+			goods[uniqueHash].claimPrice = claimPrice; //initial price
+			goods[uniqueHash].claimsEnabled = true;
 
 			Register(to,uniqueHash);
 		}
 
 
+		//modifying existing goods registrations
+		function setClaimsEnabled(bool enabled, uint256 uniqueHash)
+		{
+				if(goods[uniqueHash] != 0x0) revert();
+				if (goods[uniqueHash].creator != msg.sender) revert(); //must own the registration to transfer it
+
+				goods[uniqueHash].claimsEnabled = enabled;
+
+				ModifyClaimsEnable(msg.sender,enabled,uniqueHash);
+
+		}
+
+		function setClaimsPrice(unit claimPrice, uint256 uniqueHash)
+		{
+				if(goods[uniqueHash] != 0x0) revert();
+				if (goods[uniqueHash].creator != msg.sender) revert(); //must own the registration to transfer it
+
+				goods[uniqueHash].claimPrice = claimPrice;
+
+				ModifyClaimsPrice(msg.sender,claimPrice,uniqueHash);
+
+		}
+
+		function transferRegistration(address to, uint256 uniqueHash)
+		{
+				if(goods[uniqueHash] != 0x0) revert();
+				if (goods[uniqueHash].creator != msg.sender) revert(); //must own the registration to transfer it
+
+				goods[uniqueHash].creator = to;
+
+				RegistrationTransfer(msg.sender,to,uniqueHash);
+
+		}
+
+
+
 		function purchaseGood(uint256 uniqueHash)
 		{
 			if(goods[uniqueHash] == 0x0) revert(); //if the good isnt registered
-			if(goods[uniqueHash].nextSupplyIndexToSell == goods[uniqueHash].totalSupply) revert(); //the the good is all sold out
+			if(goods[uniqueHash].nextSupplyIndexToSell >= goods[uniqueHash].totalSupply) revert(); //the the good is all sold out
 
 
 			PurchaseGood(msg.sender, uniqueHash, goods[uniqueHash].nextSupplyIndexToSell );
@@ -119,87 +169,50 @@ contract EtherGoodsMarket {
 		}
 
 
-/*
-    function setInitialOwner(address to, uint punkIndex) {
-        if (msg.sender != owner) revert();
-        if (allPunksAssigned) revert();
-        if (punkIndex >= 10000) revert();
-        if (punkIndexToAddress[punkIndex] != to) {
-            if (punkIndexToAddress[punkIndex] != 0x0) {
-                balanceOf[punkIndexToAddress[punkIndex]]--;
-            } else {
-                punksRemainingToAssign--;
-            }
-            punkIndexToAddress[punkIndex] = to;
-            balanceOf[to]++;
-            Assign(to, punkIndex);
-        }
-    }
-		*/
 
-  /*  function setInitialOwners(address[] addresses, uint[] indices) {
-        if (msg.sender != owner) revert();
-        uint n = addresses.length;
-        for (uint i = 0; i < n; i++) {
-            setInitialOwner(addresses[i], indices[i]);
-        }
+
+
+		function offerSupplyForSale(uint256 uniqueHash, uint supplyIndex, uint minSalePriceInWei) {
+        //if (!allPunksAssigned) revert();
+				if(goods[uniqueHash] == 0x0) revert(); //if the good isnt registered
+        if(goods[uniqueHash].addressToSupplyIndex[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
+        if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
+
+				goods[uniqueHash].supplyOfferedForSale[supplyIndex] = Offer(true, uniqueHash, supplyIndex, msg.sender, minSalePriceInWei, 0x0);
+			  //punksOfferedForSale[punkIndex] = Offer(true, punkIndex, msg.sender, minSalePriceInWei, 0x0);
+        //PunkOffered(punkIndex, minSalePriceInWei, 0x0);
+				SupplyOffered(uniqueHash,supplyIndex, minSalePriceInWei, 0x0);
     }
 
-    function allInitialOwnersAssigned() {
-        if (msg.sender != owner) revert();
-        allPunksAssigned = true;
-    }*/
+		function offerSupplyForSaleToAddress(uint256 uniqueHash, uint supplyIndex, uint minSalePriceInWei, address toAddress) {
+			if(goods[uniqueHash] == 0x0) revert(); //if the good isnt registered
+			if(goods[uniqueHash].addressToSupplyIndex[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
+			if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
 
+				goods[uniqueHash].supplyOfferedForSale[supplyIndex] = Offer(true, uniqueHash, supplyIndex, msg.sender, minSalePriceInWei, toAddress);
 
-
-    // Transfer ownership of a punk to another user without requiring payment
-    function transferPunk(address to, uint punkIndex) {
-        if (!allPunksAssigned) revert();
-        if (punkIndexToAddress[punkIndex] != msg.sender) revert();
-        if (punkIndex >= 10000) revert();
-        if (punksOfferedForSale[punkIndex].isForSale) {
-            punkNoLongerForSale(punkIndex);
-        }
-        punkIndexToAddress[punkIndex] = to;
-        balanceOf[msg.sender]--;
-        balanceOf[to]++;
-        Transfer(msg.sender, to, 1);
-        PunkTransfer(msg.sender, to, punkIndex);
-        // Check for the case where there is a bid from the new owner and refund it.
-        // Any other bid can stay in place.
-        Bid bid = punkBids[punkIndex];
-        if (bid.bidder == to) {
-            // Kill bid and refund value
-            pendingWithdrawals[to] += bid.value;
-            punkBids[punkIndex] = Bid(false, punkIndex, 0x0, 0);
-        }
+        	SupplyOffered(uniqueHash,supplyIndex, minSalePriceInWei, toAddress);
     }
 
-    function punkNoLongerForSale(uint punkIndex) {
-        if (!allPunksAssigned) revert();
-        if (punkIndexToAddress[punkIndex] != msg.sender) revert();
-        if (punkIndex >= 10000) revert();
-        punksOfferedForSale[punkIndex] = Offer(false, punkIndex, msg.sender, 0, 0x0);
-        PunkNoLongerForSale(punkIndex);
+
+    function supplyNoLongerForSale(uint256 uniqueHash, uint supplyIndex) {
+			if(goods[uniqueHash] == 0x0) revert(); //if the good isnt registered
+			if(goods[uniqueHash].addressToSupplyIndex[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
+			if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
+
+        goods[uniqueHash].supplyOfferedForSale[supplyIndex] = Offer(false, uniqueHash, supplyIndex, msg.sender, 0, 0x0);
+        SupplyNoLongerForSale(uniqueHash,supplyIndex);
     }
 
-    function offerPunkForSale(uint punkIndex, uint minSalePriceInWei) {
-        if (!allPunksAssigned) revert();
-        if (punkIndexToAddress[punkIndex] != msg.sender) revert();
-        if (punkIndex >= 10000) revert();
-        punksOfferedForSale[punkIndex] = Offer(true, punkIndex, msg.sender, minSalePriceInWei, 0x0);
-        PunkOffered(punkIndex, minSalePriceInWei, 0x0);
-    }
 
-    function offerPunkForSaleToAddress(uint punkIndex, uint minSalePriceInWei, address toAddress) {
-        if (!allPunksAssigned) revert();
-        if (punkIndexToAddress[punkIndex] != msg.sender) revert();
-        if (punkIndex >= 10000) revert();
-        punksOfferedForSale[punkIndex] = Offer(true, punkIndex, msg.sender, minSalePriceInWei, toAddress);
-        PunkOffered(punkIndex, minSalePriceInWei, toAddress);
-    }
 
-    function buyPunk(uint punkIndex) payable {
+
+
+
+
+
+
+    function buySupply(uint punkIndex) payable {
         if (!allPunksAssigned) revert();
         Offer offer = punksOfferedForSale[punkIndex];
         if (punkIndex >= 10000) revert();
