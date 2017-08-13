@@ -7,11 +7,11 @@ contract('EtherGoods', function(accounts) {
     return EtherGoods.deployed().then(function(instance) {
     //  return instance.getBalance.call(accounts[0]);
 
-      var unique_hash = sha3_256("lalala");
-      return instance.registerNewGood.call(accounts[0],unique_hash,"canoe","A wooden boat",5);
-    }).then(function(balance) {
-      var unique_hash = sha3_256("lalala");
-      assert.equal(goods[unique_hash].initialized, true, "Good is registered");
+      var unique_hash = sha3_256("canoeasset");
+      return instance.registerNewGood.call(accounts[0],unique_hash,"canoe","A wooden boat",5,400);
+    }).then(function(response) {
+      var unique_hash = sha3_256("canoeasset");
+      assert.equal(response.initialized, true, "Good is registered");
     });
   });
 

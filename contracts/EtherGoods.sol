@@ -17,7 +17,7 @@ contract EtherGoods {
 				uint totalSupply;
 				//uint supplyRemaining;
 				uint nextSupplyIndexToSell;
-				uint256 uniqueHash; //The SHA3 hash of the artwork/asset. must be unique
+				bytes32 uniqueHash; //The SHA3 hash of the artwork/asset. must be unique
 				uint claimPrice;        // in ether
 				bool claimsEnabled;
 
@@ -37,7 +37,7 @@ contract EtherGoods {
 
     struct Offer {
         bool isForSale;
-				uint256 uniqueHash;
+				bytes32 uniqueHash;
         uint supplyIndex;
         address seller;
         uint minValue;          // in ether
@@ -46,7 +46,7 @@ contract EtherGoods {
 
     struct Bid {
         bool hasBid;
-				uint256 uniqueHash;
+				bytes32 uniqueHash;
 				uint supplyIndex;
         address bidder;
         uint value;
@@ -55,7 +55,7 @@ contract EtherGoods {
 	/*/	mapping (uint256 => address) public creatorAddress;*/
 
 		//the uint256 is the unique hash of the good, SHA3
-		mapping (uint256 => Good) public goods;
+		mapping (bytes32 => Good) public goods;
 
 
 
@@ -64,22 +64,22 @@ contract EtherGoods {
 
     mapping (address => uint) public pendingWithdrawals;
 
-		event RegisterGood(address indexed to, uint256 goodHash);
-		event RegistrationTransfer(address indexed from, address indexed to, uint256 goodHash);
-		event ModifyClaimsEnable(address indexed owner,bool enabele,uint256 goodHash);
-		event ModifyClaimsPrice(address indexed owner,uint price,uint256 goodHash);
+		event RegisterGood(address indexed to, bytes32 goodHash);
+		event RegistrationTransfer(address indexed from, address indexed to, bytes32 goodHash);
+		event ModifyClaimsEnable(address indexed owner,bool enabele,bytes32 goodHash);
+		event ModifyClaimsPrice(address indexed owner,uint price,bytes32 goodHash);
 
-    event ClaimGood(address indexed to, uint256 goodHash, uint supplyIndex);
-    event TransferSupply(uint256 indexed uniqueHash,address indexed from, address indexed to, uint amount);
+    event ClaimGood(address indexed to, bytes32 goodHash, uint supplyIndex);
+    event TransferSupply(bytes32 indexed uniqueHash,address indexed from, address indexed to, uint amount);
 
-  	event SupplyOffered(uint256 indexed uniqueHash, uint indexed supplyIndex, uint minValue, address indexed toAddress);
-    event SupplyBidEntered(uint256 indexed uniqueHash, uint indexed supplyIndex, uint value, address indexed fromAddress);
-    event SupplyBidWithdrawn(uint256 indexed uniqueHash, uint indexed supplyIndex, uint value, address indexed fromAddress);
-		event SupplyBought(uint256 indexed uniqueHash, uint indexed supplyIndex, uint value, address fromAddress, address indexed toAddress);
-		event SupplySold(uint256 indexed uniqueHash, uint indexed supplyIndex, uint value, address indexed fromAddress, address toAddress);
+  	event SupplyOffered(bytes32 indexed uniqueHash, uint indexed supplyIndex, uint minValue, address indexed toAddress);
+    event SupplyBidEntered(bytes32 indexed uniqueHash, uint indexed supplyIndex, uint value, address indexed fromAddress);
+    event SupplyBidWithdrawn(bytes32 indexed uniqueHash, uint indexed supplyIndex, uint value, address indexed fromAddress);
+		event SupplyBought(bytes32 indexed uniqueHash, uint indexed supplyIndex, uint value, address fromAddress, address indexed toAddress);
+		event SupplySold(bytes32 indexed uniqueHash, uint indexed supplyIndex, uint value, address indexed fromAddress, address toAddress);
 			//cant index enough !
 
-  	event SupplyNoLongerForSale(uint256 indexed uniqueHash, uint indexed supplyIndex);
+  	event SupplyNoLongerForSale(bytes32 indexed uniqueHash, uint indexed supplyIndex);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function EthergoodsMarket() payable {
@@ -89,7 +89,7 @@ contract EtherGoods {
      }
 
 
-		function registerNewGood(address to, uint256 uniqueHash, string name, string description, uint totalSupply, uint claimPrice )
+		function registerNewGood(address to, bytes32 uniqueHash, string name, string description, uint totalSupply, uint claimPrice )
 		{
 			//make sure the good doesnt exist
 			if(goods[uniqueHash].initialized) revert();
@@ -111,7 +111,7 @@ contract EtherGoods {
 
 
 		//modifying existing goods registrations
-		function setClaimsEnabled(bool enabled, uint256 uniqueHash)
+		function setClaimsEnabled(bool enabled, bytes32 uniqueHash)
 		{
 				if(!goods[uniqueHash].initialized) revert();
 				if (goods[uniqueHash].creator != msg.sender) revert(); //must own the registration to transfer it
@@ -122,7 +122,7 @@ contract EtherGoods {
 
 		}
 
-		function setClaimsPrice(uint claimPrice, uint256 uniqueHash)
+		function setClaimsPrice(uint claimPrice, bytes32 uniqueHash)
 		{
 				if(!goods[uniqueHash].initialized) revert();
 				if(goods[uniqueHash].creator != msg.sender) revert(); //must own the registration to transfer it
@@ -133,7 +133,7 @@ contract EtherGoods {
 
 		}
 
-		function transferRegistration(address to, uint256 uniqueHash)
+		function transferRegistration(address to, bytes32 uniqueHash)
 		{
 				if(!goods[uniqueHash].initialized) revert();
 				if(goods[uniqueHash].creator != msg.sender) revert(); //must own the registration to transfer it
@@ -146,7 +146,7 @@ contract EtherGoods {
 
 
 
-		function claimGood(uint256 uniqueHash)
+		function claimGood(bytes32 uniqueHash)
 		{
 			if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
 			if(goods[uniqueHash].nextSupplyIndexToSell >= goods[uniqueHash].totalSupply) revert(); // the good is all claimed
@@ -168,7 +168,7 @@ contract EtherGoods {
 
 
 
-		function offerSupplyForSale(uint256 uniqueHash, uint supplyIndex, uint minSalePriceInWei) {
+		function offerSupplyForSale(bytes32 uniqueHash, uint supplyIndex, uint minSalePriceInWei) {
          if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
         if(goods[uniqueHash].supplyIndexToAddress[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
         if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
@@ -177,7 +177,7 @@ contract EtherGoods {
 				SupplyOffered(uniqueHash,supplyIndex, minSalePriceInWei, 0x0);
     }
 
-		function offerSupplyForSaleToAddress(uint256 uniqueHash, uint supplyIndex, uint minSalePriceInWei, address toAddress) {
+		function offerSupplyForSaleToAddress(bytes32 uniqueHash, uint supplyIndex, uint minSalePriceInWei, address toAddress) {
 			if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
 			if(goods[uniqueHash].supplyIndexToAddress[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
 			if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
@@ -188,7 +188,7 @@ contract EtherGoods {
     }
 
 
-    function supplyNoLongerForSale(uint256 uniqueHash, uint supplyIndex) {
+    function supplyNoLongerForSale(bytes32 uniqueHash, uint supplyIndex) {
 			if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
 			if(goods[uniqueHash].supplyIndexToAddress[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
 			if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
@@ -205,7 +205,7 @@ contract EtherGoods {
 
 
 
-    function buySupply(uint256 uniqueHash, uint supplyIndex) payable {
+    function buySupply(bytes32 uniqueHash, uint supplyIndex) payable {
     		if(!goods[uniqueHash].initialized) revert();
         Offer offer = goods[uniqueHash].supplyOfferedForSale[supplyIndex];
         if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
@@ -248,7 +248,7 @@ contract EtherGoods {
         msg.sender.transfer(amount);
     }
 
-    function enterBidForSupply(uint256 uniqueHash, uint supplyIndex) payable {
+    function enterBidForSupply(bytes32 uniqueHash, uint supplyIndex) payable {
 
 
 			if(!goods[uniqueHash].initialized) revert();
@@ -270,7 +270,7 @@ contract EtherGoods {
         SupplyBidEntered(uniqueHash, supplyIndex, msg.value, msg.sender);
     }
 
-    function acceptBidForSupply(uint256 uniqueHash, uint supplyIndex, uint minPrice) {
+    function acceptBidForSupply(bytes32 uniqueHash, uint supplyIndex, uint minPrice) {
 
 				if(!goods[uniqueHash].initialized) revert();
 				if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
@@ -294,7 +294,7 @@ contract EtherGoods {
 				SupplySold(uniqueHash, supplyIndex, bid.value, seller, bid.bidder);
     }
 
-    function withdrawBidForSupply(uint256 uniqueHash, uint supplyIndex) {
+    function withdrawBidForSupply(bytes32 uniqueHash, uint supplyIndex) {
 				if(!goods[uniqueHash].initialized) revert();
 				if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
 
