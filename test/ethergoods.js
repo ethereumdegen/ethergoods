@@ -1,6 +1,6 @@
 var EtherGoods = artifacts.require("./EtherGoods.sol");
-var sha3_256 = require('js-sha3').sha3_256;
 
+var ethUtil =  require('ethereumjs-util');
 
 
 /*
@@ -50,7 +50,11 @@ contract('EtherGoods', function(accounts) {
   it("can register a good", async function () {
   var contract = await EtherGoods.deployed();
 
-  var unique_hash = sha3_256("canoeasset");
+  var unique_hash = ethUtil.bufferToHex(ethUtil.sha3("canoeasset"));
+  console.log('sha3')
+  console.log(unique_hash)
+
+
   await contract.registerNewGood(accounts[0],unique_hash,"canoe","A wooden boat",5,400);
 
 
@@ -66,7 +70,7 @@ contract('EtherGoods', function(accounts) {
 it("can claim a good", async function () {
   var contract = await EtherGoods.deployed();
 
-  var unique_hash = sha3_256("canoeasset");
+  var unique_hash = ethUtil.bufferToHex(ethUtil.sha3("canoeasset"));
   await contract.claimGood(unique_hash);
   await contract.claimGood(unique_hash);
   await contract.claimGood(unique_hash);
@@ -77,8 +81,11 @@ it("can claim a good", async function () {
 
     console.log("balance");
     console.log(balance_of);
+      console.log(balance_of['c'][0]);
 
-  assert.equal(1, balance_of );
+  var balance_of_value = balance_of['c'][0];
+
+  assert.equal(3, balance_of_value );
 
 }),
 

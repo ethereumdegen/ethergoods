@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/admazzola/ethergoods#readme",
   "dependencies": {
+    "ethereumjs-util": "^5.1.2",
     "js-sha3": "^0.6.1"
   }
 }
