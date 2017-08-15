@@ -28,3 +28,7 @@ truffle test
     personal.unlockAccount(eth.accounts[0])
 
 3. truffle migrate --network ropsten
+
+
+### Published contracts on ROPSTEN
+rev1.  0xdd6fa24be361432c0359ab7f2bde155a4fc31ce5
