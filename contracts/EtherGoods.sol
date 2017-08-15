@@ -5,7 +5,7 @@ contract EtherGoods {
 
     string public standard = 'EtherGoods';
     string public name;
-    string public symbol;
+    string public version;
 
 
 
@@ -14,31 +14,31 @@ contract EtherGoods {
 				address creator;
 				string name;
 				string description;
-				uint totalSupply;
+				uint16 totalSupply;   //max is 2^16
 				//uint supplyRemaining;
-				uint nextSupplyIndexToSell;
+				uint16 nextSupplyIndexToSell;
 				bytes32 uniqueHash; //The SHA3 hash of the artwork/asset. must be unique
-				uint claimPrice;        // in ether
+				uint claimPrice;        // in wei
 				bool claimsEnabled;
 
 
 				//addresses of the people who own the good
 
-				mapping (uint => address) supplyIndexToAddress;
-        mapping (address => uint256) balanceOf;
+				mapping (uint16 => address) supplyIndexToAddress;
+        mapping (address => uint32) balanceOf;  //supply owned by this address
 
 
 				// A record of supplies that are offered for sale at a specific minimum value, and perhaps to a specific person
-				mapping (uint => Offer) supplyOfferedForSale;
+				mapping (uint16 => Offer) supplyOfferedForSale;
 
 				// A record of the highest  bid
-				mapping (uint => Bid) supplyBids;
+				mapping (uint16 => Bid) supplyBids;
 		}
 
     struct Offer {
         bool isForSale;
 				bytes32 uniqueHash;
-        uint supplyIndex;
+        uint16 supplyIndex;
         address seller;
         uint minValue;          // in ether
         address onlySellTo;     // specify to sell only to a specific person
@@ -47,7 +47,7 @@ contract EtherGoods {
     struct Bid {
         bool hasBid;
 				bytes32 uniqueHash;
-				uint supplyIndex;
+				uint16 supplyIndex;
         address bidder;
         uint value;
     }
@@ -67,29 +67,31 @@ contract EtherGoods {
 		event RegisterGood(address indexed to, bytes32 goodHash);
 		event RegistrationTransfer(address indexed from, address indexed to, bytes32 goodHash);
 		event ModifyClaimsEnable(address indexed owner,bool enabele,bytes32 goodHash);
-		event ModifyClaimsPrice(address indexed owner,uint price,bytes32 goodHash);
+    event ModifyClaimsPrice(address indexed owner,uint price,bytes32 goodHash);
+    event ModifyGoodDescription(address indexed owner,string description,bytes32 goodHash);
 
-    event ClaimGood(address indexed to, bytes32 goodHash, uint supplyIndex);
+
+    event ClaimGood(address indexed to, bytes32 goodHash, uint16 supplyIndex);
     event TransferSupply(bytes32 indexed uniqueHash,address indexed from, address indexed to, uint amount);
 
-  	event SupplyOffered(bytes32 indexed uniqueHash, uint indexed supplyIndex, uint minValue, address indexed toAddress);
-    event SupplyBidEntered(bytes32 indexed uniqueHash, uint indexed supplyIndex, uint value, address indexed fromAddress);
-    event SupplyBidWithdrawn(bytes32 indexed uniqueHash, uint indexed supplyIndex, uint value, address indexed fromAddress);
-		event SupplyBought(bytes32 indexed uniqueHash, uint indexed supplyIndex, uint value, address fromAddress, address indexed toAddress);
-		event SupplySold(bytes32 indexed uniqueHash, uint indexed supplyIndex, uint value, address indexed fromAddress, address toAddress);
+  	event SupplyOffered(bytes32 indexed uniqueHash, uint16 indexed supplyIndex, uint minValue, address indexed toAddress);
+    event SupplyBidEntered(bytes32 indexed uniqueHash, uint16 indexed supplyIndex, uint value, address indexed fromAddress);
+    event SupplyBidWithdrawn(bytes32 indexed uniqueHash, uint16 indexed supplyIndex, uint value, address indexed fromAddress);
+		event SupplyBought(bytes32 indexed uniqueHash, uint16 indexed supplyIndex, uint value, address fromAddress, address indexed toAddress);
+		event SupplySold(bytes32 indexed uniqueHash, uint16 indexed supplyIndex, uint value, address indexed fromAddress, address toAddress);
 			//cant index enough !
 
-  	event SupplyNoLongerForSale(bytes32 indexed uniqueHash, uint indexed supplyIndex);
+  	event SupplyNoLongerForSale(bytes32 indexed uniqueHash, uint16 indexed supplyIndex);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function EthergoodsMarket() payable {
         owner = msg.sender;
         name = "ETHERGOODS";                                 // Set the name for display purposes
-        symbol = "EGS";                     			          // Set the symbol for display purposes
-     }
+        version = "0.1.2";
+    }
 
 
-		function registerNewGood(address to, bytes32 uniqueHash, string name, string description, uint totalSupply, uint claimPrice )
+		function registerNewGood( bytes32 uniqueHash, string name, uint16 totalSupply, uint claimPrice )
 		{
 			//make sure the good doesnt exist
 			if(goods[uniqueHash].initialized) revert();
@@ -97,9 +99,9 @@ contract EtherGoods {
 			if(claimPrice < 0) revert();
 
 			goods[uniqueHash].initialized = true;
-			goods[uniqueHash].creator = to; //usually msg.sender
+			goods[uniqueHash].creator = msg.sender; //usually msg.sender
 			goods[uniqueHash].name = name;
-			goods[uniqueHash].description = description;
+			//goods[uniqueHash].description = description;
 			goods[uniqueHash].totalSupply = totalSupply;
 			goods[uniqueHash].nextSupplyIndexToSell = 0;
       goods[uniqueHash].uniqueHash = uniqueHash;
@@ -107,9 +109,22 @@ contract EtherGoods {
 			goods[uniqueHash].claimPrice = claimPrice; //initial price
 			goods[uniqueHash].claimsEnabled = true;
 
-			RegisterGood(to,uniqueHash);
+			RegisterGood(msg.sender,uniqueHash);
 		}
 
+
+
+
+    function setGoodDescription(string description, bytes32 uniqueHash)
+		{
+				if(!goods[uniqueHash].initialized) revert();
+				if (goods[uniqueHash].creator != msg.sender) revert(); //must own the registration to transfer it
+
+				goods[uniqueHash].description = description;
+
+				ModifyGoodDescription(msg.sender,description,uniqueHash);
+
+		}
 
 		//modifying existing goods registrations
 		function setClaimsEnabled(bool enabled, bytes32 uniqueHash)
@@ -147,11 +162,12 @@ contract EtherGoods {
 
 
 
-		function claimGood(bytes32 uniqueHash)
+		function claimGood(bytes32 uniqueHash) payable
 		{
 			if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
 			if(goods[uniqueHash].nextSupplyIndexToSell >= goods[uniqueHash].totalSupply) revert(); // the good is all claimed
-
+      if (msg.value == 0) revert();
+      if (msg.value <= goods[uniqueHash].claimPrice) revert();
 
 
 			goods[uniqueHash].supplyIndexToAddress[goods[uniqueHash].nextSupplyIndexToSell] = msg.sender;
@@ -165,15 +181,52 @@ contract EtherGoods {
 
 		}
 
+    //amount of supply that an account owns
     function getSupplyBalance(bytes32 uniqueHash, address to) returns (uint amount)
     {
       if(!goods[uniqueHash].initialized) revert();
       amount = goods[uniqueHash].balanceOf[to];
     }
 
+    //the account that owns a particular supply
+    function getSupplyIndexToAddress(bytes32 uniqueHash, uint16 supplyIndex) returns (address to)
+    {
+      if(!goods[uniqueHash].initialized) revert();
+      to = goods[uniqueHash].supplyIndexToAddress[supplyIndex];
+    }
 
 
-		function offerSupplyForSale(bytes32 uniqueHash, uint supplyIndex, uint minSalePriceInWei) {
+
+
+    function getSupplyOfferedForSale(bytes32 uniqueHash, uint16 supplyIndex) returns (bool isForSale,  address seller, uint minValue, address onlySellTo)
+    {
+      if(!goods[uniqueHash].initialized) revert();
+      Offer offer = goods[uniqueHash].supplyOfferedForSale[supplyIndex];
+
+      isForSale = offer.isForSale;
+      seller = offer.seller;
+      minValue = offer.minValue;
+      onlySellTo = offer.onlySellTo;
+
+    }
+
+    function getSupplyBids(bytes32 uniqueHash, uint16 supplyIndex) returns (bool hasBid, address bidder, uint value)
+    {
+      if(!goods[uniqueHash].initialized) revert();
+      Bid bid = goods[uniqueHash].supplyBids[supplyIndex];
+
+      hasBid = bid.hasBid;
+      bidder = bid.bidder;
+      value = bid.value;
+
+    }
+
+
+
+
+
+
+		function offerSupplyForSale(bytes32 uniqueHash, uint16 supplyIndex, uint minSalePriceInWei) {
          if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
         if(goods[uniqueHash].supplyIndexToAddress[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
         if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
@@ -182,7 +235,7 @@ contract EtherGoods {
 				SupplyOffered(uniqueHash,supplyIndex, minSalePriceInWei, 0x0);
     }
 
-		function offerSupplyForSaleToAddress(bytes32 uniqueHash, uint supplyIndex, uint minSalePriceInWei, address toAddress) {
+		function offerSupplyForSaleToAddress(bytes32 uniqueHash, uint16 supplyIndex, uint minSalePriceInWei, address toAddress) {
 			if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
 			if(goods[uniqueHash].supplyIndexToAddress[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
 			if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
@@ -193,7 +246,7 @@ contract EtherGoods {
     }
 
 
-    function supplyNoLongerForSale(bytes32 uniqueHash, uint supplyIndex) {
+    function supplyNoLongerForSale(bytes32 uniqueHash, uint16 supplyIndex) {
 			if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
 			if(goods[uniqueHash].supplyIndexToAddress[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
 			if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
@@ -205,7 +258,7 @@ contract EtherGoods {
 
 
 
-    function buySupply(bytes32 uniqueHash, uint supplyIndex) payable {
+    function buySupply(bytes32 uniqueHash, uint16 supplyIndex) payable {
     		if(!goods[uniqueHash].initialized) revert();
         Offer offer = goods[uniqueHash].supplyOfferedForSale[supplyIndex];
         if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
@@ -248,7 +301,7 @@ contract EtherGoods {
         msg.sender.transfer(amount);
     }
 
-    function enterBidForSupply(bytes32 uniqueHash, uint supplyIndex) payable {
+    function enterBidForSupply(bytes32 uniqueHash, uint16 supplyIndex) payable {
 
 
 			if(!goods[uniqueHash].initialized) revert();
@@ -270,7 +323,7 @@ contract EtherGoods {
         SupplyBidEntered(uniqueHash, supplyIndex, msg.value, msg.sender);
     }
 
-    function acceptBidForSupply(bytes32 uniqueHash, uint supplyIndex, uint minPrice) {
+    function acceptBidForSupply(bytes32 uniqueHash, uint16 supplyIndex, uint minPrice) {
 
 				if(!goods[uniqueHash].initialized) revert();
 				if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
@@ -294,7 +347,7 @@ contract EtherGoods {
 				SupplySold(uniqueHash, supplyIndex, bid.value, seller, bid.bidder);
     }
 
-    function withdrawBidForSupply(bytes32 uniqueHash, uint supplyIndex) {
+    function withdrawBidForSupply(bytes32 uniqueHash, uint16 supplyIndex) {
 				if(!goods[uniqueHash].initialized) revert();
 				if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
 
