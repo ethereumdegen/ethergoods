@@ -24,21 +24,27 @@ contract EtherGoods {
 
 				//addresses of the people who own the good
 
-				mapping (uint16 => address) supplyIndexToAddress;
+
         mapping (address => uint32) balanceOf;  //supply owned by this address
 
 
-				// A record of supplies that are offered for sale at a specific minimum value, and perhaps to a specific person
-				mapping (uint16 => Offer) supplyOfferedForSale;
 
-				// A record of the highest  bid
-				mapping (uint16 => Bid) supplyBids;
+        //consider removing this !
+    //    mapping (uint16 => address) supplyIndexToAddress;
+
+
 		}
+
+    // A record of supplies that are offered for sale at a specific minimum value, and perhaps to a specific person
+    mapping (bytes32 => Offer) supplyOfferedForSale;
+
+    // A record of the highest  bid
+    mapping (bytes32 => Bid) supplyBids;
 
     struct Offer {
         bool isForSale;
 				bytes32 uniqueHash;
-        uint16 supplyIndex;
+      //  uint16 supplyIndex;
         address seller;
         uint minValue;          // in ether
         address onlySellTo;     // specify to sell only to a specific person
@@ -47,7 +53,7 @@ contract EtherGoods {
     struct Bid {
         bool hasBid;
 				bytes32 uniqueHash;
-				uint16 supplyIndex;
+				//uint16 supplyIndex;
         address bidder;
         uint value;
     }
@@ -71,17 +77,17 @@ contract EtherGoods {
     event ModifyGoodDescription(address indexed owner,string description,bytes32 goodHash);
 
 
-    event ClaimGood(address indexed to, bytes32 goodHash, uint16 supplyIndex);
+    event ClaimGood(address indexed to, bytes32 goodHash, uint32 supplyIndex);
     event TransferSupply(bytes32 indexed uniqueHash,address indexed from, address indexed to, uint amount);
 
-  	event SupplyOffered(bytes32 indexed uniqueHash, uint16 indexed supplyIndex, uint minValue, address indexed toAddress);
-    event SupplyBidEntered(bytes32 indexed uniqueHash, uint16 indexed supplyIndex, uint value, address indexed fromAddress);
-    event SupplyBidWithdrawn(bytes32 indexed uniqueHash, uint16 indexed supplyIndex, uint value, address indexed fromAddress);
-		event SupplyBought(bytes32 indexed uniqueHash, uint16 indexed supplyIndex, uint value, address fromAddress, address indexed toAddress);
-		event SupplySold(bytes32 indexed uniqueHash, uint16 indexed supplyIndex, uint value, address indexed fromAddress, address toAddress);
+  	event SupplyOffered(bytes32 indexed uniqueHash, uint minValue, address indexed toAddress);
+    event SupplyBidEntered(bytes32 indexed uniqueHash, uint value, address indexed fromAddress);
+    event SupplyBidWithdrawn(bytes32 indexed uniqueHash, uint value, address indexed fromAddress);
+		event SupplyBought(bytes32 indexed uniqueHash,  uint value, address fromAddress, address indexed toAddress);
+		event SupplySold(bytes32 indexed uniqueHash, uint value, address indexed fromAddress, address toAddress);
 			//cant index enough !
 
-  	event SupplyNoLongerForSale(bytes32 indexed uniqueHash, uint16 indexed supplyIndex);
+  	event SupplyNoLongerForSale(bytes32 indexed uniqueHash);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function EthergoodsMarket() payable {
@@ -170,7 +176,7 @@ contract EtherGoods {
       if (msg.value <= goods[uniqueHash].claimPrice) revert();
 
 
-			goods[uniqueHash].supplyIndexToAddress[goods[uniqueHash].nextSupplyIndexToSell] = msg.sender;
+		//	goods[uniqueHash].supplyIndexToAddress[goods[uniqueHash].nextSupplyIndexToSell] = msg.sender;
 
       goods[uniqueHash].balanceOf[msg.sender]++;
 
@@ -189,105 +195,85 @@ contract EtherGoods {
     }
 
     //the account that owns a particular supply
-    function getSupplyIndexToAddress(bytes32 uniqueHash, uint16 supplyIndex) returns (address to)
-    {
-      if(!goods[uniqueHash].initialized) revert();
-      to = goods[uniqueHash].supplyIndexToAddress[supplyIndex];
-    }
-
-
-
-
-    function getSupplyOfferedForSale(bytes32 uniqueHash, uint16 supplyIndex) returns (bool isForSale,  address seller, uint minValue, address onlySellTo)
-    {
-      if(!goods[uniqueHash].initialized) revert();
-      Offer offer = goods[uniqueHash].supplyOfferedForSale[supplyIndex];
-
-      isForSale = offer.isForSale;
-      seller = offer.seller;
-      minValue = offer.minValue;
-      onlySellTo = offer.onlySellTo;
-
-    }
-
-    function getSupplyBids(bytes32 uniqueHash, uint16 supplyIndex) returns (bool hasBid, address bidder, uint value)
-    {
-      if(!goods[uniqueHash].initialized) revert();
-      Bid bid = goods[uniqueHash].supplyBids[supplyIndex];
-
-      hasBid = bid.hasBid;
-      bidder = bid.bidder;
-      value = bid.value;
-
-    }
+  //  function getSupplyIndexToAddress(bytes32 uniqueHash, uint16 supplyIndex) returns (address to)
+  //  {
+  //    if(!goods[uniqueHash].initialized) revert();
+  //    to = goods[uniqueHash].supplyIndexToAddress[supplyIndex];
+  //  }
 
 
 
 
 
 
-		function offerSupplyForSale(bytes32 uniqueHash, uint16 supplyIndex, uint minSalePriceInWei) {
+
+
+
+		function offerSupplyForSale(bytes32 uniqueHash, uint minSalePriceInWei) {
          if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
-        if(goods[uniqueHash].supplyIndexToAddress[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
-        if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
 
-				goods[uniqueHash].supplyOfferedForSale[supplyIndex] = Offer(true, uniqueHash, supplyIndex, msg.sender, minSalePriceInWei, 0x0);
-				SupplyOffered(uniqueHash,supplyIndex, minSalePriceInWei, 0x0);
+        if(goods[uniqueHash].balanceOf[msg.sender] < 1) revert(); //must have balance of the token
+        if(supplyOfferedForSale[uniqueHash].isForSale)
+        {
+          if(minSalePriceInWei > supplyOfferedForSale[uniqueHash].minValue) revert();
+        }
+
+				supplyOfferedForSale[uniqueHash] = Offer(true, uniqueHash, msg.sender, minSalePriceInWei, 0x0);
+				SupplyOffered(uniqueHash, minSalePriceInWei, 0x0);
     }
 
-		function offerSupplyForSaleToAddress(bytes32 uniqueHash, uint16 supplyIndex, uint minSalePriceInWei, address toAddress) {
+		function offerSupplyForSaleToAddress(bytes32 uniqueHash, uint minSalePriceInWei, address toAddress) {
 			if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
-			if(goods[uniqueHash].supplyIndexToAddress[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
-			if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
+			if(goods[uniqueHash].balanceOf[msg.sender] < 1) revert();
 
-				goods[uniqueHash].supplyOfferedForSale[supplyIndex] = Offer(true, uniqueHash, supplyIndex, msg.sender, minSalePriceInWei, toAddress);
 
-        	SupplyOffered(uniqueHash,supplyIndex, minSalePriceInWei, toAddress);
+				supplyOfferedForSale[uniqueHash] = Offer(true, uniqueHash, msg.sender, minSalePriceInWei, toAddress);
+
+        	SupplyOffered(uniqueHash, minSalePriceInWei, toAddress);
     }
 
 
-    function supplyNoLongerForSale(bytes32 uniqueHash, uint16 supplyIndex) {
+    function supplyNoLongerForSale(bytes32 uniqueHash) {
 			if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
-			if(goods[uniqueHash].supplyIndexToAddress[supplyIndex] != msg.sender) revert(); //must be the owner of this supply
-			if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
+			if(supplyOfferedForSale[uniqueHash].seller != msg.sender) revert(); //must be the owner of this supply
 
-        goods[uniqueHash].supplyOfferedForSale[supplyIndex] = Offer(false, uniqueHash, supplyIndex, msg.sender, 0, 0x0);
-        SupplyNoLongerForSale(uniqueHash,supplyIndex);
+
+        supplyOfferedForSale[uniqueHash] = Offer(false, uniqueHash, msg.sender, 0, 0x0);
+        SupplyNoLongerForSale(uniqueHash);
     }
 
 
 
 
-    function buySupply(bytes32 uniqueHash, uint16 supplyIndex) payable {
+    function buySupply(bytes32 uniqueHash) payable {
     		if(!goods[uniqueHash].initialized) revert();
-        Offer offer = goods[uniqueHash].supplyOfferedForSale[supplyIndex];
-        if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
+        Offer offer = supplyOfferedForSale[uniqueHash];
+      //  if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
         if (!offer.isForSale) revert();                // supply not actually for sale
         if (offer.onlySellTo != 0x0 && offer.onlySellTo != msg.sender) revert();  //  not supposed to be sold to this user
         if (msg.value < offer.minValue) revert();      // Didn't send enough ETH
-        if (offer.seller != goods[uniqueHash].creator) revert(); // Seller no longer owner of
+    //    if (offer.seller != goods[uniqueHash].creator) revert(); // Seller no longer owner of
 
         address seller = offer.seller;
 
-				goods[uniqueHash].supplyIndexToAddress[supplyIndex] = msg.sender; //set the new owner of the supply
+				//goods[uniqueHash].supplyIndexToAddress[supplyIndex] = msg.sender; //set the new owner of the supply
         goods[uniqueHash].balanceOf[seller]--;
       	goods[uniqueHash].balanceOf[msg.sender]++;
         TransferSupply(uniqueHash, seller, msg.sender, 1);
 
-        SupplyNoLongerForSale(uniqueHash,supplyIndex);
+        SupplyNoLongerForSale(uniqueHash);
         pendingWithdrawals[seller] += msg.value;
-				SupplyBought(uniqueHash,supplyIndex, msg.value, seller, msg.sender);
-				SupplySold(uniqueHash,supplyIndex, msg.value, seller, msg.sender);
+				SupplyBought(uniqueHash, msg.value, seller, msg.sender);
+				SupplySold(uniqueHash, msg.value, seller, msg.sender);
 
 
-					//FIX MEE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         // Check for the case where there is a bid from the new owner and refund it.
         // Any other bid can stay in place.
-        Bid bid = goods[uniqueHash].supplyBids[supplyIndex];
+        Bid bid =  supplyBids[uniqueHash];
         if (bid.bidder == msg.sender) {
             // Kill bid and refund value
             pendingWithdrawals[msg.sender] += bid.value;
-            goods[uniqueHash].supplyBids[supplyIndex] = Bid(false, uniqueHash, supplyIndex, 0x0, 0);
+             supplyBids[uniqueHash] = Bid(false, uniqueHash, 0x0, 0);
         }
     }
 
@@ -301,17 +287,15 @@ contract EtherGoods {
         msg.sender.transfer(amount);
     }
 
-    function enterBidForSupply(bytes32 uniqueHash, uint16 supplyIndex) payable {
+    function enterBidForSupply(bytes32 uniqueHash) payable {
 
 
 			if(!goods[uniqueHash].initialized) revert();
-			if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
+			//if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
 
 
-        if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == 0x0) revert();
-        if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == msg.sender) revert();
         if (msg.value == 0) revert();
-				Bid existing = goods[uniqueHash].supplyBids[supplyIndex];
+				Bid existing =  supplyBids[uniqueHash];
 
         if (msg.value <= existing.value) revert();
         if (existing.value > 0) {
@@ -319,45 +303,45 @@ contract EtherGoods {
             pendingWithdrawals[existing.bidder] += existing.value;
         }
 
-        goods[uniqueHash].supplyBids[supplyIndex] = Bid(true, uniqueHash, supplyIndex, msg.sender, msg.value);
-        SupplyBidEntered(uniqueHash, supplyIndex, msg.value, msg.sender);
+         supplyBids[uniqueHash] = Bid(true, uniqueHash, msg.sender, msg.value);
+        SupplyBidEntered(uniqueHash, msg.value, msg.sender);
     }
 
-    function acceptBidForSupply(bytes32 uniqueHash, uint16 supplyIndex, uint minPrice) {
+    function acceptBidForSupply(bytes32 uniqueHash, uint minPrice) {
 
 				if(!goods[uniqueHash].initialized) revert();
-				if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
 
-				if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == msg.sender) revert();
         address seller = msg.sender;
-        Bid bid = goods[uniqueHash].supplyBids[supplyIndex];
+        Bid bid = supplyBids[uniqueHash];
+        if(bid.bidder == msg.sender) revert(); //cant accept own bid
+        if (goods[uniqueHash].balanceOf[seller] < 1 ) revert();
         if (bid.value == 0) revert();
         if (bid.value < minPrice) revert();
 
-        goods[uniqueHash].supplyIndexToAddress[supplyIndex] = bid.bidder;
+        //goods[uniqueHash].supplyIndexToAddress[supplyIndex] = bid.bidder;
         goods[uniqueHash].balanceOf[seller]--;
         goods[uniqueHash].balanceOf[bid.bidder]++;
         TransferSupply(uniqueHash,seller, bid.bidder, 1);
 
-        goods[uniqueHash].supplyOfferedForSale[supplyIndex] = Offer(false, uniqueHash, supplyIndex, bid.bidder, 0, 0x0);
+        supplyOfferedForSale[uniqueHash] = Offer(false, uniqueHash, bid.bidder, 0, 0x0);
         uint amount = bid.value;
-        goods[uniqueHash].supplyBids[supplyIndex] = Bid(false, uniqueHash, supplyIndex, 0x0, 0);
+        supplyBids[uniqueHash] = Bid(false, uniqueHash, 0x0, 0);
         pendingWithdrawals[seller] += amount;
-        SupplyBought(uniqueHash, supplyIndex, bid.value, seller, bid.bidder);
-				SupplySold(uniqueHash, supplyIndex, bid.value, seller, bid.bidder);
+        SupplyBought(uniqueHash, bid.value, seller, bid.bidder);
+				SupplySold(uniqueHash, bid.value, seller, bid.bidder);
     }
 
-    function withdrawBidForSupply(bytes32 uniqueHash, uint16 supplyIndex) {
+    function withdrawBidForSupply(bytes32 uniqueHash) {
 				if(!goods[uniqueHash].initialized) revert();
-				if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
+				//if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
 
-			   if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == 0x0) revert();
-				if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == msg.sender) revert();
-			  Bid bid = goods[uniqueHash].supplyBids[supplyIndex];
+			  //if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == 0x0) revert();
+				//if (goods[uniqueHash].supplyIndexToAddress[supplyIndex] == msg.sender) revert();
+			  Bid bid = supplyBids[uniqueHash];
 			  if (bid.bidder != msg.sender) revert();
-        SupplyBidWithdrawn(uniqueHash,supplyIndex, bid.value, msg.sender);
+        SupplyBidWithdrawn(uniqueHash, bid.value, msg.sender);
         uint amount = bid.value;
-        goods[uniqueHash].supplyBids[supplyIndex] = Bid(false, uniqueHash, supplyIndex, 0x0, 0);
+         supplyBids[uniqueHash] = Bid(false, uniqueHash, 0x0, 0);
         // Refund the bid money
         msg.sender.transfer(amount);
     }
