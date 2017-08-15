@@ -93,7 +93,7 @@ contract EtherGoods {
     function EthergoodsMarket() payable {
         owner = msg.sender;
         name = "ETHERGOODS";                                 // Set the name for display purposes
-        version = "0.1.2";
+        version = "0.2.1";
     }
 
 
@@ -173,7 +173,7 @@ contract EtherGoods {
 			if(!goods[uniqueHash].initialized) revert(); //if the good isnt registered
 			if(goods[uniqueHash].nextSupplyIndexToSell >= goods[uniqueHash].totalSupply) revert(); // the good is all claimed
       if (msg.value == 0) revert();
-      if (msg.value <= goods[uniqueHash].claimPrice) revert();
+      if (msg.value < goods[uniqueHash].claimPrice) revert();
 
 
 		//	goods[uniqueHash].supplyIndexToAddress[goods[uniqueHash].nextSupplyIndexToSell] = msg.sender;
