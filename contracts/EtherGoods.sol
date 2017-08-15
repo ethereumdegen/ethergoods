@@ -36,10 +36,10 @@ contract EtherGoods {
 		}
 
     // A record of supplies that are offered for sale at a specific minimum value, and perhaps to a specific person
-    mapping (bytes32 => Offer) supplyOfferedForSale;
+    mapping (bytes32 => Offer) public supplyOfferedForSale;
 
     // A record of the highest  bid
-    mapping (bytes32 => Bid) supplyBids;
+    mapping (bytes32 => Bid) public supplyBids;
 
     struct Offer {
         bool isForSale;
