@@ -12,22 +12,21 @@ contract EtherGoods {
 		struct Good {
 				bool initialized;
 				address creator;
-				string name;
+				//string name;
+
+        bytes32 uniqueHash; //effectively the name of the asset
+        bytes ipfsHash;  //multihash store for the IPFS address to the asset
+
 				string description;
 				uint16 totalSupply;   //max is 2^16
 				//uint supplyRemaining;
 				uint16 nextSupplyIndexToSell;
-				bytes32 uniqueHash; //The SHA3 hash of the artwork/asset. must be unique
+
 				uint claimPrice;        // in wei
 				bool claimsEnabled;
-
-
-				//addresses of the people who own the good
-
+ 				//addresses of the people who own the good
 
         mapping (address => uint32) balanceOf;  //supply owned by this address
-
-
 
         //consider removing this !
     //    mapping (uint16 => address) supplyIndexToAddress;
@@ -65,9 +64,6 @@ contract EtherGoods {
 
 
 
-
-
-
     mapping (address => uint) public pendingWithdrawals;
 
 		event RegisterGood(address indexed to, bytes32 goodHash);
@@ -93,12 +89,15 @@ contract EtherGoods {
     function EthergoodsMarket() payable {
         owner = msg.sender;
         name = "ETHERGOODS";                                 // Set the name for display purposes
-        version = "0.2.1";
+        version = "0.2.2";
     }
 
 
-		function registerNewGood( bytes32 uniqueHash, string name, uint16 totalSupply, uint claimPrice )
+		function registerNewGood( string name, string description, uint16 totalSupply, uint claimPrice )
 		{
+      if(bytes(name).length > 32) revert() 
+      uniqueHash = stringToBytes32(uniqueHash)
+
 			//make sure the good doesnt exist
 			if(goods[uniqueHash].initialized) revert();
 			if(totalSupply < 1) revert();
@@ -106,11 +105,11 @@ contract EtherGoods {
 
 			goods[uniqueHash].initialized = true;
 			goods[uniqueHash].creator = msg.sender; //usually msg.sender
-			goods[uniqueHash].name = name;
-			//goods[uniqueHash].description = description;
+
 			goods[uniqueHash].totalSupply = totalSupply;
 			goods[uniqueHash].nextSupplyIndexToSell = 0;
       goods[uniqueHash].uniqueHash = uniqueHash;
+      goods[uniqueHash].description = description;
 
 			goods[uniqueHash].claimPrice = claimPrice; //initial price
 			goods[uniqueHash].claimsEnabled = true;
@@ -118,8 +117,11 @@ contract EtherGoods {
 			RegisterGood(msg.sender,uniqueHash);
 		}
 
-
-
+    function stringToBytes32(string memory source) returns (bytes32 result) {
+        assembly {
+            result := mload(add(source, 32))
+        }
+    }
 
     function setGoodDescription(string description, bytes32 uniqueHash)
 		{
@@ -180,6 +182,11 @@ contract EtherGoods {
 
       goods[uniqueHash].balanceOf[msg.sender]++;
 
+
+
+      //Content creator gets 90% of claim price
+      pendingWithdrawals[goods[uniqueHash].creator] += (msg.value);
+
 			ClaimGood(msg.sender, uniqueHash, goods[uniqueHash].nextSupplyIndexToSell );
 
 			goods[uniqueHash].nextSupplyIndexToSell++;
@@ -200,10 +207,6 @@ contract EtherGoods {
   //    if(!goods[uniqueHash].initialized) revert();
   //    to = goods[uniqueHash].supplyIndexToAddress[supplyIndex];
   //  }
-
-
-
-
 
 
 
@@ -262,7 +265,13 @@ contract EtherGoods {
         TransferSupply(uniqueHash, seller, msg.sender, 1);
 
         SupplyNoLongerForSale(uniqueHash);
-        pendingWithdrawals[seller] += msg.value;
+
+        market_fee = msg.value/50;
+
+        pendingWithdrawals[owner] += market_fee;
+
+        pendingWithdrawals[seller] += (msg.value - market_fee);
+
 				SupplyBought(uniqueHash, msg.value, seller, msg.sender);
 				SupplySold(uniqueHash, msg.value, seller, msg.sender);
 
@@ -298,7 +307,7 @@ contract EtherGoods {
 				Bid existing =  supplyBids[uniqueHash];
 
         if (msg.value <= existing.value) revert();
-        if (existing.value > 0) {
+        if (existing.value > 0 && existing.hasBid) {  ///if there is another active bid
             // Refund the failing bid
             pendingWithdrawals[existing.bidder] += existing.value;
         }
@@ -326,7 +335,13 @@ contract EtherGoods {
         supplyOfferedForSale[uniqueHash] = Offer(false, uniqueHash, bid.bidder, 0, 0x0);
         uint amount = bid.value;
         supplyBids[uniqueHash] = Bid(false, uniqueHash, 0x0, 0);
-        pendingWithdrawals[seller] += amount;
+
+        market_fee = amount/50;
+
+        pendingWithdrawals[owner] += market_fee;
+
+        pendingWithdrawals[seller] += (amount - market_fee);
+
         SupplyBought(uniqueHash, bid.value, seller, bid.bidder);
 				SupplySold(uniqueHash, bid.value, seller, bid.bidder);
     }
@@ -341,7 +356,7 @@ contract EtherGoods {
 			  if (bid.bidder != msg.sender) revert();
         SupplyBidWithdrawn(uniqueHash, bid.value, msg.sender);
         uint amount = bid.value;
-         supplyBids[uniqueHash] = Bid(false, uniqueHash, 0x0, 0);
+        supplyBids[uniqueHash] = Bid(false, uniqueHash, 0x0, 0);
         // Refund the bid money
         msg.sender.transfer(amount);
     }

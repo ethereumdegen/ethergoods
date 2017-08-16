@@ -38,5 +38,8 @@ rev1.  0xdd6fa24be361432c0359ab7f2bde155a4fc31ce5
 
 
 ### HOW TO IMPROVE
+-small fee for claiming
 
--dont allow for bidding or offering on individual supplies of the goods.  Just allow for a bid or offer of ANY supply  and then fulfillment as such ! That way the bids and offers arent mapped inside the struct.
+## Interesting ..
+https://github.com/ipfs/js-ipfs
+https://github.com/AdrianClv/ethereum-ipfs
