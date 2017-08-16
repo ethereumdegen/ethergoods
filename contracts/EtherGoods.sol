@@ -95,8 +95,8 @@ contract EtherGoods {
 
 		function registerNewGood( string name, string description, uint16 totalSupply, uint claimPrice )
 		{
-      if(bytes(name).length > 32) revert() 
-      uniqueHash = stringToBytes32(uniqueHash)
+      if(bytes(name).length > 32) revert();
+      bytes32 uniqueHash = stringToBytes32(name);
 
 			//make sure the good doesnt exist
 			if(goods[uniqueHash].initialized) revert();
@@ -266,7 +266,7 @@ contract EtherGoods {
 
         SupplyNoLongerForSale(uniqueHash);
 
-        market_fee = msg.value/50;
+        uint market_fee = msg.value/50;
 
         pendingWithdrawals[owner] += market_fee;
 
@@ -336,7 +336,7 @@ contract EtherGoods {
         uint amount = bid.value;
         supplyBids[uniqueHash] = Bid(false, uniqueHash, 0x0, 0);
 
-        market_fee = amount/50;
+        uint market_fee = amount/50;
 
         pendingWithdrawals[owner] += market_fee;
 
