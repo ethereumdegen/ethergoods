@@ -239,10 +239,10 @@ contract BasicNFTTokenMarket is Ownable  {
   function withdrawPendingBalance() public
   {
     if( pendingWithdrawals[msg.sender] <= 0 ) revert();
-
-    msg.sender.transfer( pendingWithdrawals[msg.sender] );
-
+    uint256 amountToWithdraw = pendingWithdrawals[msg.sender];
     pendingWithdrawals[msg.sender] = 0;
+    msg.sender.transfer( amountToWithdraw );
+
   }
 
 

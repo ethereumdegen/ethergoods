@@ -28,11 +28,12 @@ contract EtherGoods {
     struct GoodType {
        uint256 typeId; //the id of the asset blueprint
        address creator;
-       uint16 totalSupply;
-       uint16 nextSupplyIndexToSell;
+       uint256 totalSupply;
+       uint256 nextSupplyIndexToSell;
+       uint256 claimPrice; // can be changed by owner
+       bytes32  name;
        string description;
        bool initialized;
-       uint claimPrice; // can be changed by owner
        bool claimsEnabled; // can be changed by owner
    }
 
@@ -68,9 +69,9 @@ contract EtherGoods {
     }
 
 
-		function registerNewGoodType( string name, string description, uint16 totalSupply, uint claimPrice ) public
+		function registerNewGoodType( bytes32  name, string description, uint256 totalSupply, uint256 claimPrice ) public
 		{
-    //  if(bytes(name).length > 32) revert();
+      if( (name).length > 32) revert();
       uint256 typeId = uint256(keccak256( name ));
 
 			//make sure the goodtype doesnt exist
@@ -84,6 +85,8 @@ contract EtherGoods {
 			goodTypes[typeId].totalSupply = totalSupply;
 			goodTypes[typeId].nextSupplyIndexToSell = 0;
       goodTypes[typeId].typeId = typeId;
+
+      goodTypes[typeId].name = name;
       goodTypes[typeId].description = description;
 
 			goodTypes[typeId].claimPrice = claimPrice; //price in wei to buy an instance
@@ -157,20 +160,22 @@ contract EtherGoods {
       if (msg.value < 0) revert();
       if (goods.exists(typeId, goodTypes[typeId].nextSupplyIndexToSell)) revert();
 
+      uint instanceId = goodTypes[typeId].nextSupplyIndexToSell;
+      goodTypes[typeId].nextSupplyIndexToSell++;
+
       string memory metadata;
-	    goods.claimGoodToken(msg.sender,goods.buildTokenId(typeId,goodTypes[typeId].nextSupplyIndexToSell),metadata);
+	    goods.claimGoodToken(msg.sender,goods.buildTokenId(typeId,instanceId),metadata);
 
       //Content creator gets claim eth
       pendingWithdrawals[goodTypes[typeId].creator] += goodTypes[typeId].claimPrice;
 
-      //refund overspends   CHECK ME FOR BUGS LIKE OVERFLOW
-
+      //refund overspends
       pendingWithdrawals[goodTypes[typeId].creator] += (msg.value - goodTypes[typeId].claimPrice);
 
 
 			ClaimGood(msg.sender, typeId, goodTypes[typeId].nextSupplyIndexToSell );
 
-			goodTypes[typeId].nextSupplyIndexToSell++;
+
 
 
 		}
@@ -180,11 +185,9 @@ contract EtherGoods {
 
     function withdrawPendingBalance() public
     {
-      if( pendingWithdrawals[msg.sender] <= 0 ) revert();
-
-      msg.sender.transfer( pendingWithdrawals[msg.sender] );
-
+      uint256 amountToWithdraw = pendingWithdrawals[msg.sender];
       pendingWithdrawals[msg.sender] = 0;
+      msg.sender.transfer( amountToWithdraw );
     }
 
 
