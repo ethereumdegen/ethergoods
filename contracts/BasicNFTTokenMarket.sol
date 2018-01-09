@@ -66,7 +66,7 @@ contract BasicNFTTokenMarket is Ownable  {
       uint256 tokenId;
     //  uint16 supplyIndex;
       address seller;
-      uint minValue;          // in ether
+      uint256 minValue;          // in ether
       address onlySellTo;     // specify to sell only to a specific person
   }
 
@@ -75,7 +75,7 @@ contract BasicNFTTokenMarket is Ownable  {
       uint256 tokenId;
       //uint16 supplyIndex;
       address bidder;
-      uint value;
+      uint256 value;
   }
 
 
@@ -155,7 +155,7 @@ contract BasicNFTTokenMarket is Ownable  {
       TransferSupply(tokenId, seller, msg.sender, 1);
       SupplyNoLongerForSale(tokenId);
 
-      uint market_fee = msg.value/50;
+      uint256 market_fee = msg.value/50;
 
       pendingWithdrawals[owner] += market_fee;
 
@@ -209,10 +209,10 @@ contract BasicNFTTokenMarket is Ownable  {
       TransferSupply(tokenId,seller, bid.bidder, 1);
 
       supplyOfferedForSale[tokenId] = Offer(false, tokenId, bid.bidder, 0, 0x0);
-      uint amount = bid.value;
+      uint256 amount = bid.value;
       supplyBids[tokenId] = Bid(false, tokenId, 0x0, 0);
 
-      uint market_fee = amount/50;
+      uint256 market_fee = amount/50;
 
       pendingWithdrawals[owner] += market_fee;
       pendingWithdrawals[seller] += (amount - market_fee);
