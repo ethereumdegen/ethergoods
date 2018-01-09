@@ -1,5 +1,5 @@
-
-import 'zeppelin-solidity/contracts/ownership/Ownable.sol';
+pragma solidity ^0.4.8;
+import './Ownable.sol';
 import './BasicNFT.sol';
 
 // SEE https://github.com/decentraland/land/tree/master/contracts

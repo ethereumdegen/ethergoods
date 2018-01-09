@@ -2,7 +2,7 @@ pragma solidity ^0.4.8;
 
 
 import './GOODToken.sol';  //NFT
-
+import './BasicNFTTokenMarket.sol';
 // see https://github.com/OpenZeppelin/zeppelin-solidity/tree/master/contracts
 
 // see https://github.com/decentraland/land/tree/master/contracts
@@ -10,23 +10,23 @@ import './GOODToken.sol';  //NFT
 
 contract EtherGoods {
 
-    address contractOwner;
+    address owner;
 
-    string public standard = 'EtherGoods';
-    string public name;
+  //  string public standard = 'EtherGoods';
+    string public name = 'EtherGoods';
     string public version;
 
     // GOODToken contract that holds the registry of good instances
-    GOODToken public goods;
+    GoodToken public goods;
 
     //allows users to buy and sell the NFT tokens
     BasicNFTTokenMarket public goodTokenMarket;
-    goodTokenMarket.setTokenContract(goods);
-     
+  //  goodTokenMarket.setTokenContract(goods);
+
 
     //blueprint for a good
     struct GoodType {
-       bytes32 typeId; //the id of the asset blueprint
+       uint256 typeId; //the id of the asset blueprint
        address creator;
        uint16 totalSupply;
        uint16 nextSupplyIndexToSell;
@@ -38,7 +38,7 @@ contract EtherGoods {
 
 
 
-    mapping (bytes32 => GoodType) goodTypes;
+    mapping (uint256 => GoodType) goodTypes;
 
 
     // https://github.com/ethereum/eips/issues/721
@@ -49,37 +49,29 @@ contract EtherGoods {
 
     mapping (address => uint) public pendingWithdrawals;
 
-		event RegisterGood(address indexed to, bytes32 goodHash);
-		event RegistrationTransfer(address indexed from, address indexed to, bytes32 goodHash);
-		event ModifyClaimsEnable(address indexed owner,bool enabele,bytes32 goodHash);
-    event ModifyClaimsPrice(address indexed owner,uint price,bytes32 goodHash);
-    event ModifyGoodDescription(address indexed owner,string description,bytes32 goodHash);
+		event RegisterGood(address indexed to, uint256 typeId);
+		event RegistrationTransfer(address indexed from, address indexed to, uint256 typeId);
+		event ModifyClaimsEnable(address indexed owner,bool enabele,uint256 typeId);
+    event ModifyClaimsPrice(address indexed owner,uint price,uint256 typeId);
+    event ModifyGoodTypeDescription(address indexed owner,string description,uint256 typeId);
 
 
-    event ClaimGood(address indexed to, bytes32 goodHash, uint32 supplyIndex);
-    event TransferSupply(bytes32 indexed typeId,address indexed from, address indexed to, uint amount);
+    event ClaimGood(address indexed to, uint256 goodHash, uint256 supplyIndex);
+	//cant index enough !
 
-  	event SupplyOffered(bytes32 indexed typeId, uint minValue, address indexed toAddress);
-    event SupplyBidEntered(bytes32 indexed typeId, uint value, address indexed fromAddress);
-    event SupplyBidWithdrawn(bytes32 indexed typeId, uint value, address indexed fromAddress);
-		event SupplyBought(bytes32 indexed typeId,  uint value, address fromAddress, address indexed toAddress);
-		event SupplySold(bytes32 indexed typeId, uint value, address indexed fromAddress, address toAddress);
-			//cant index enough !
-
-  	event SupplyNoLongerForSale(bytes32 indexed typeId);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function EthergoodsMarket() payable {
+    function EthergoodsMarket() public payable {
         owner = msg.sender;
         name = "ETHERGOODS";                                 // Set the name for display purposes
         version = "0.2.2";
     }
 
 
-		function registerNewGoodType( string name, string description, uint16 totalSupply, uint claimPrice )
+		function registerNewGoodType( string name, string description, uint16 totalSupply, uint claimPrice ) public
 		{
-      if(bytes(name).length > 32) revert();
-      bytes32 typeId = stringToBytes32(name);
+    //  if(bytes(name).length > 32) revert();
+      uint256 typeId = uint256(keccak256( name ));
 
 			//make sure the goodtype doesnt exist
 			if(goodTypes[typeId].initialized) revert();
@@ -94,19 +86,19 @@ contract EtherGoods {
       goodTypes[typeId].typeId = typeId;
       goodTypes[typeId].description = description;
 
-			goodgoodTypess[typeId].claimPrice = claimPrice; //price in wei to buy an instance
+			goodTypes[typeId].claimPrice = claimPrice; //price in wei to buy an instance
       goodTypes[typeId].claimsEnabled = true; //owners switch for allowing sales
 
 			RegisterGood(msg.sender,typeId);
 		}
 
-    function stringToBytes32(string memory source) returns (bytes32 result) {
+  /*  function stringToBytes32(string memory source) public returns (bytes32 result)  {
         assembly {
             result := mload(add(source, 32))
         }
-    }
+    }*/
 
-    function setGoodTypeDescription(string description, bytes32 typeId)
+    function setGoodTypeDescription(string description, uint256 typeId) public
 		{
 				if(!goodTypes[typeId].initialized) revert();
 				if (goodTypes[typeId].creator != msg.sender) revert(); //must own the registration to transfer it
@@ -118,7 +110,7 @@ contract EtherGoods {
 		}
 
 		//modifying existing goods registrations
-		function setClaimsEnabled(bool enabled, bytes32 typeId)
+		function setClaimsEnabled(bool enabled, uint256 typeId) public
 		{
 				if(!goodTypes[typeId].initialized) revert();
 				if (goodTypes[typeId].creator != msg.sender) revert(); //must own the registration to transfer it
@@ -129,7 +121,7 @@ contract EtherGoods {
 
 		}
 
-		function setClaimsPrice(uint claimPrice, bytes32 typeId)
+		function setClaimsPrice(uint claimPrice, uint256 typeId) public
 		{
 				if(!goodTypes[typeId].initialized) revert();
 				if(goodTypes[typeId].creator != msg.sender) revert(); //must own the registration to transfer it
@@ -141,21 +133,21 @@ contract EtherGoods {
 
 		}
 
-		function transferRegistration(address to, bytes32 typeId)
+		function transferRegistration(address to, uint256 typeId) public
 		{
 				if(!goodTypes[typeId].initialized) revert();
 				if(goodTypes[typeId].creator != msg.sender) revert(); //must own the registration to transfer it
 
 				goodTypes[typeId].creator = to;
 
-				RegistrationTransfer(msg.sender,to,uniqueHash);
+				RegistrationTransfer(msg.sender,to,typeId);
 
 		}
 
 
 
        //uniqueHash =typeId
-		function claimGood(bytes32 typeId) payable
+		function claimGood(uint256 typeId) public payable
 		{
 			if(!goodTypes[typeId].initialized) revert(); //if the good isnt registered
 			if(goodTypes[typeId].nextSupplyIndexToSell >= goodTypes[typeId].totalSupply) revert(); // the good is all claimed
@@ -163,24 +155,22 @@ contract EtherGoods {
       if (msg.value < goodTypes[typeId].claimPrice) revert();
       if (goodTypes[typeId].claimPrice < 0) revert();
       if (msg.value < 0) revert();
-      if (goods.exists(typeId, goods[typeId].nextSupplyIndexToSell)) revert();
+      if (goods.exists(typeId, goodTypes[typeId].nextSupplyIndexToSell)) revert();
 
-		//	goods[typeId].supplyIndexToAddress[goods[typeId].nextSupplyIndexToSell] = msg.sender;
-
-    //  goods[typeId].balanceOf[msg.sender]++;
-      goods.claimGoodToken(typeId,goods[typeId].nextSupplyIndexToSell);
-
+      string memory metadata;
+	    goods.claimGoodToken(msg.sender,goods.buildTokenId(typeId,goodTypes[typeId].nextSupplyIndexToSell),metadata);
 
       //Content creator gets claim eth
-      pendingWithdrawals[goods[typeId].creator] += goodTypes[typeId].claimPrice
+      pendingWithdrawals[goodTypes[typeId].creator] += goodTypes[typeId].claimPrice;
 
-      //refund overspends
-      pendingWithdrawals[goods[typeId].creator] += (msg.value - goodTypes[typeId].claimPrice)
+      //refund overspends   CHECK ME FOR BUGS LIKE OVERFLOW
+
+      pendingWithdrawals[goodTypes[typeId].creator] += (msg.value - goodTypes[typeId].claimPrice);
 
 
-			ClaimGood(msg.sender, typeId, goods[typeId].nextSupplyIndexToSell );
+			ClaimGood(msg.sender, typeId, goodTypes[typeId].nextSupplyIndexToSell );
 
-			goods[typeId].nextSupplyIndexToSell++;
+			goodTypes[typeId].nextSupplyIndexToSell++;
 
 
 		}
@@ -188,7 +178,7 @@ contract EtherGoods {
 
 
 
-    function withdrawPendingBalance()
+    function withdrawPendingBalance() public
     {
       if( pendingWithdrawals[msg.sender] <= 0 ) revert();
 

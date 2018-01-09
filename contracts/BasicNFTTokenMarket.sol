@@ -1,11 +1,51 @@
 pragma solidity ^0.4.15;
 
+import './Ownable.sol';
 import './BasicNFT.sol';
 
-contract BasicNFTTokenMarket   {
+contract BasicNFTTokenMarket is Ownable  {
 
-  address contractOwner;
+  address owner;
   BasicNFT public tokenContract;
+  uint256 public ownerCut;
+
+  bool hasTokenContract = false;
+
+  mapping (address => uint) public pendingWithdrawals;
+
+  event TransferSupply(uint256 indexed typeId,address indexed from, address indexed to, uint amount);
+
+  event SupplyOffered(uint256 indexed typeId, uint minValue, address indexed toAddress);
+  event SupplyBidEntered(uint256 indexed typeId, uint value, address indexed fromAddress);
+  event SupplyBidWithdrawn(uint256 indexed typeId, uint value, address indexed fromAddress);
+  event SupplyBought(uint256 indexed typeId,  uint value, address fromAddress, address indexed toAddress);
+  event SupplySold(uint256 indexed typeId, uint value, address indexed fromAddress, address toAddress);
+
+  event SupplyNoLongerForSale(uint256 indexed typeId);
+//  event BidNoLongeOffered(uint256 indexed typeId);
+
+
+
+  function BasicNFTTokenMarket(address _nftAddress, uint256 _cut) public onlyOwner {
+      require(_cut <= 10000);
+      ownerCut = _cut;
+
+      BasicNFT basicNFTContract = BasicNFT(_nftAddress);
+      //require(candidateContract.supportsInterface(InterfaceSignature_ERC721));
+      tokenContract = basicNFTContract;
+      hasTokenContract = true;
+  }
+
+  function setTokenContractAddress(address _address) external onlyOwner {
+      BasicNFT basicNFTContract = BasicNFT(_address);
+
+      // NOTE: verify that a contract is what we expect - https://github.com/Lunyr/crowdsale-contracts/blob/cfadd15986c30521d8ba7d5b6f57b4fefcc7ac38/contracts/LunyrToken.sol#L117
+      //require(candidateContract.isSaleClockAuction());
+
+      // Set the new contract address
+      tokenContract = basicNFTContract;
+      hasTokenContract = true;
+  }
 
   // Array of owned tokens for a user
 /*  mapping(address => uint[]) public ownedTokens;
@@ -23,7 +63,7 @@ contract BasicNFTTokenMarket   {
 
   struct Offer {
       bool isForSale;
-      bytes32 tokenId;
+      uint256 tokenId;
     //  uint16 supplyIndex;
       address seller;
       uint minValue;          // in ether
@@ -32,7 +72,7 @@ contract BasicNFTTokenMarket   {
 
   struct Bid {
       bool hasBid;
-      bytes32 tokenId;
+      uint256 tokenId;
       //uint16 supplyIndex;
       address bidder;
       uint value;
@@ -42,29 +82,25 @@ contract BasicNFTTokenMarket   {
   mapping(address => Bid[]) public bids;
 
   // A record of supplies that are offered for sale at a specific minimum value, and perhaps to a specific person
-  mapping (bytes32 => Offer) public supplyOfferedForSale;
+  mapping (uint256 => Offer) public supplyOfferedForSale;
 
   // A record of the highest  bid
-  mapping (bytes32 => Bid) public supplyBids;
+  mapping (uint256 => Bid) public supplyBids;
 
 
 
 
-  function setTokenContract(contract) onlyOwner public{
-    tokenContract = contract;
-  }
-
-  function hasTokenContract() public{
-    return tokenContract != 0x0;
+  function tokenContractExists() public returns (bool){
+    return hasTokenContract;
   }
 
 
   //tokenId is the keccak of the typeId and instanceId
   function tokenExists(uint tokenId) public constant returns (bool) {
-     return tokenContract.tokenOwner[tokenId] != 0x0;
+     return tokenContract.tokenOwner(tokenId) != 0x0;
    }
 
-  function offerSupplyForSale(bytes32 tokenId, uint minSalePriceInWei) {
+  function offerSupplyForSale(uint256 tokenId, uint minSalePriceInWei) public {
       if(!tokenExists(tokenId)) revert(); //if the good isnt registered
       if(tokenContract.ownerOf(tokenId) != msg.sender ) revert(); //must have balance of the token
 
@@ -77,7 +113,7 @@ contract BasicNFTTokenMarket   {
       SupplyOffered(tokenId, minSalePriceInWei, 0x0);
   }
 
-  function offerSupplyForSaleToAddress(bytes32 tokenId, uint minSalePriceInWei, address toAddress) {
+  function offerSupplyForSaleToAddress(uint256 tokenId, uint minSalePriceInWei, address toAddress) public {
     if(!tokenExists(tokenId)) revert(); //if the good isnt registered
     if(tokenContract.ownerOf(tokenId) != msg.sender ) revert(); //must have balance of the token
 
@@ -87,7 +123,7 @@ contract BasicNFTTokenMarket   {
   }
 
 
-  function supplyNoLongerForSale(bytes32 tokenId) {
+  function supplyNoLongerForSale(uint256 tokenId) public {
     if(!tokenExists(tokenId)) revert(); //if the good isnt registered
     if(tokenContract.ownerOf(tokenId) != msg.sender ) revert();
     if(supplyOfferedForSale[tokenId].seller != msg.sender) revert(); //must be the owner of this supply
@@ -100,9 +136,9 @@ contract BasicNFTTokenMarket   {
 
 
 
-  function buySupply(bytes32 tokenId) payable {
+  function buySupply(uint256 tokenId) public payable {
       if(!tokenExists(tokenId)) revert();
-      Offer offer = supplyOfferedForSale[tokenId];
+      Offer memory offer = supplyOfferedForSale[tokenId];
     //  if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
       if (!offer.isForSale) revert();                // supply not actually for sale
       if (offer.onlySellTo != 0x0 && offer.onlySellTo != msg.sender) revert();  //  not supposed to be sold to this user
@@ -121,7 +157,7 @@ contract BasicNFTTokenMarket   {
 
       uint market_fee = msg.value/50;
 
-      pendingWithdrawals[contractOwner] += market_fee;
+      pendingWithdrawals[owner] += market_fee;
 
       pendingWithdrawals[seller] += (msg.value - market_fee);
 
@@ -130,7 +166,7 @@ contract BasicNFTTokenMarket   {
 
       // Check for the case where there is a bid from the new owner and refund it.
       // Any other bid can stay in place.
-      Bid bid =  supplyBids[tokenId];
+      Bid memory bid =  supplyBids[tokenId];
       if (bid.bidder == msg.sender) {
           // Kill bid and refund value
           pendingWithdrawals[msg.sender] += bid.value;
@@ -140,11 +176,11 @@ contract BasicNFTTokenMarket   {
 
 
 
-  function enterBidForSupply(bytes32 tokenId) payable {
+  function enterBidForSupply(uint256 tokenId) public payable {
     if(!tokenExists(tokenId)) revert();
 
       if (msg.value == 0) revert();
-      Bid existing =  supplyBids[tokenId];
+      Bid memory existing =  supplyBids[tokenId];
       if (msg.value <= existing.value) revert(); //need to bid higher
       if (existing.value > 0 && existing.hasBid) {  ///if there is another active bid
           // Refund the failing bid
@@ -156,12 +192,12 @@ contract BasicNFTTokenMarket   {
        SupplyBidEntered(tokenId, msg.value, msg.sender);
   }
 
-  function acceptBidForSupply(bytes32 tokenId, uint minPrice) {
+  function acceptBidForSupply(uint256 tokenId, uint minPrice) public {
 
       if(!tokenExists(tokenId)) revert();
 
-      address seller = msg.sender;
-      Bid bid = supplyBids[tokenId];
+       address seller = msg.sender;
+       Bid memory bid = supplyBids[tokenId];
       if(bid.bidder == msg.sender) revert(); //cant accept own bid
 
       if(tokenContract.ownerOf(tokenId) != seller ) revert(); //must have balance of the token
@@ -170,7 +206,7 @@ contract BasicNFTTokenMarket   {
       if (bid.value < minPrice) revert();
 
       tokenContract.transfer(msg.sender,tokenId);
-      TransferSupply(uniquetokenIdHash,seller, bid.bidder, 1);
+      TransferSupply(tokenId,seller, bid.bidder, 1);
 
       supplyOfferedForSale[tokenId] = Offer(false, tokenId, bid.bidder, 0, 0x0);
       uint amount = bid.value;
@@ -185,21 +221,22 @@ contract BasicNFTTokenMarket   {
       SupplySold(tokenId, bid.value, seller, bid.bidder);
   }
 
-  function withdrawBidForSupply(bytes32 tokenId) {
+  function withdrawBidForSupply(uint256 tokenId) public {
       if(!tokenExists(tokenId)) revert();
 
-      Bid bid = supplyBids[tokenId];
+      Bid memory bid = supplyBids[tokenId];
       if (bid.bidder != msg.sender) revert();
+
       SupplyBidWithdrawn(tokenId, bid.value, msg.sender);
-      uint amount = bid.value;
+
       supplyBids[tokenId] = Bid(false, tokenId, 0x0, 0);
       // Refund the bid money
 
-      pendingWithdrawals[msg.sender] += market_fee;
+      pendingWithdrawals[msg.sender] +=  bid.value;
   }
 
 
-  function withdrawPendingBalance()
+  function withdrawPendingBalance() public
   {
     if( pendingWithdrawals[msg.sender] <= 0 ) revert();
 
