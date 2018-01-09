@@ -69,10 +69,10 @@ contract EtherGoods {
     }
 
 
-		function registerNewGoodType( bytes32  name, string description, uint256 totalSupply, uint256 claimPrice ) public
+		function registerNewGoodType( bytes32  goodTypeName, string description, uint256 totalSupply, uint256 claimPrice ) public
 		{
-      if( (name).length > 32) revert();
-      uint256 typeId = uint256(keccak256( name ));
+      if( (goodTypeName).length > 32) revert();
+      uint256 typeId = uint256(keccak256( goodTypeName ));
 
 			//make sure the goodtype doesnt exist
 			if(goodTypes[typeId].initialized) revert();
@@ -86,7 +86,7 @@ contract EtherGoods {
 			goodTypes[typeId].nextSupplyIndexToSell = 0;
       goodTypes[typeId].typeId = typeId;
 
-      goodTypes[typeId].name = name;
+      goodTypes[typeId].name = goodTypeName;
       goodTypes[typeId].description = description;
 
 			goodTypes[typeId].claimPrice = claimPrice; //price in wei to buy an instance
