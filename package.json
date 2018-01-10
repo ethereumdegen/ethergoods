@@ -1,5 +1,6 @@
 {
   "name": "ethergoods",
+  "engines" : { "node" : ">=7.6" }, 
   "version": "0.1.0",
   "description": "TODO:",
   "main": "truffle.js",
@@ -23,6 +24,7 @@
   },
   "homepage": "https://github.com/admazzola/ethergoods#readme",
   "dependencies": {
+    "asyncawait": "^1.0.6",
     "ethereumjs-util": "^5.1.2",
     "js-sha3": "^0.6.1"
   }

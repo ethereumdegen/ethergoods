@@ -1,7 +1,7 @@
 pragma solidity ^0.4.8;
 
 
-import './GOODToken.sol';  //NFT
+import './GoodToken.sol';  //NFT
 import './BasicNFTTokenMarket.sol';
 // see https://github.com/OpenZeppelin/zeppelin-solidity/tree/master/contracts
 
