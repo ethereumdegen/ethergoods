@@ -24,12 +24,12 @@ contract GoodToken is Ownable, BasicNFT {
     //similar to LAND but X is the goodType and Y is the instanceId of the token
 
 
-    function claimGoodToken(address beneficiary, uint tokenId, string _metadata) onlyOwner public {
+    function claimGoodToken(address beneficiary, uint tokenId, uint256 _metadata) onlyOwner public {
        require(tokenOwner[tokenId] == 0);
        _claimNewToken(beneficiary, tokenId, _metadata);
      }
 
-     function _claimNewToken(address beneficiary, uint tokenId, string _metadata) internal {
+     function _claimNewToken(address beneficiary, uint tokenId, uint256 _metadata) internal {
         //latestPing[tokenId] = now;
         _addTokenTo(beneficiary, tokenId);
         totalTokens++;
@@ -38,7 +38,8 @@ contract GoodToken is Ownable, BasicNFT {
         Created(tokenId, beneficiary, _metadata);
       }
 
-    function goodMetadata(uint typeId, uint instanceId) constant public returns (string) {
+      //this returns the GoodTypeId since that is what the metadata is 
+    function goodMetadata(uint typeId, uint instanceId) constant public returns (uint256) {
         return _tokenMetadata[buildTokenId(typeId,instanceId)];
     }
 

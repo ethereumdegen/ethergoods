@@ -96,25 +96,26 @@ contract EtherGoods is Ownable {
     }
 
 
-		function registerNewGoodType( bytes32  goodTypeName, string description, uint256 totalSupply, uint256 claimPrice ) public
+		function registerNewGoodType( bytes32  goodTypeName,   uint256 totalSupply, uint256 claimPrice ) public
 		{
       if( (goodTypeName).length > 32) revert();
       uint256 typeId = uint256(keccak256( goodTypeName ));
-
-			//make sure the goodtype doesnt exist
-			if(goodTypes[typeId].initialized) revert();
-			if(totalSupply < 1) revert();
+      if(totalSupply < 1) revert();
 			if(claimPrice < 0) revert();
+			//make sure the goodtype doesnt exist
 
+      //disallow timing attack
+      if(goodTypes[typeId].initialized) revert();
 			goodTypes[typeId].initialized = true;
-			goodTypes[typeId].creator = msg.sender; //usually msg.sender
+
+    	goodTypes[typeId].creator = msg.sender; //usually msg.sender
 
 			goodTypes[typeId].totalSupply = totalSupply;
 			goodTypes[typeId].nextSupplyIndexToSell = 0;
       goodTypes[typeId].typeId = typeId;
 
       goodTypes[typeId].name = goodTypeName;
-      goodTypes[typeId].description = description;
+    //  goodTypes[typeId].description = description;
 
 			goodTypes[typeId].claimPrice = claimPrice; //price in wei to buy an instance
       goodTypes[typeId].claimsEnabled = true; //owners switch for allowing sales
@@ -187,10 +188,10 @@ contract EtherGoods is Ownable {
       if (msg.value < 0) revert();
       if (goods.exists(typeId, goodTypes[typeId].nextSupplyIndexToSell)) revert();
 
-      uint instanceId = goodTypes[typeId].nextSupplyIndexToSell;
+      uint256 instanceId = goodTypes[typeId].nextSupplyIndexToSell;
       goodTypes[typeId].nextSupplyIndexToSell++;
 
-      string memory metadata;
+      uint256 memory metadata = typeId;
 	    goods.claimGoodToken(msg.sender,goods.buildTokenId(typeId,instanceId),metadata);
 
       //Content creator gets claim eth

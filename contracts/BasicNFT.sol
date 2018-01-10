@@ -18,7 +18,7 @@ contract BasicNFT is NFT, NFTEvents {
   mapping(uint => address) public allowedTransfer;
 
   // Metadata associated with each token
-  mapping(uint => string) public _tokenMetadata;
+  mapping(uint => uint256) public _tokenMetadata;
 
   function totalSupply() public constant returns (uint) {
     return totalTokens;
@@ -72,15 +72,15 @@ contract BasicNFT is NFT, NFTEvents {
     Approval(tokenOwner[tokenId], beneficiary, tokenId);
   }
 
-  function tokenMetadata(uint tokenId) constant public returns (string) {
+  function tokenMetadata(uint tokenId) constant public returns (uint256) {
     return _tokenMetadata[tokenId];
   }
 
-  function metadata(uint tokenId) constant public returns (string) {
+  function metadata(uint tokenId) constant public returns (uint256) {
     return _tokenMetadata[tokenId];
   }
 
-  function updateTokenMetadata(uint tokenId, string _metadata) public {
+  function updateTokenMetadata(uint tokenId, uint256 _metadata) public {
     require(msg.sender == tokenOwner[tokenId]);
     _tokenMetadata[tokenId] = _metadata;
     MetadataUpdated(tokenId, msg.sender, _metadata);

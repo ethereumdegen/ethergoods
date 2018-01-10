@@ -12,7 +12,7 @@ contract NFT {
   function transferFrom(address from, address to, uint tokenId) public;
   function approve(address beneficiary, uint tokenId) public;
 
-  function metadata(uint tokenId) public constant returns (string);
+  function metadata(uint tokenId) public constant returns (uint256);
 }
 
 contract NFTEvents {
