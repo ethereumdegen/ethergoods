@@ -8,13 +8,16 @@ import './BasicNFTTokenMarket.sol';
 // see https://github.com/decentraland/land/tree/master/contracts
 
 
-contract EtherGoods {
+contract EtherGoods is Ownable {
 
     address owner;
 
   //  string public standard = 'EtherGoods';
     string public name = 'EtherGoods';
     string public version;
+
+    bool public hasTokenContract = false;
+    bool public hasMarketContract = false;
 
     // GOODToken contract that holds the registry of good instances
     GoodToken public goods;
@@ -66,6 +69,30 @@ contract EtherGoods {
         owner = msg.sender;
         name = "ETHERGOODS";                                 // Set the name for display purposes
         version = "0.2.2";
+    }
+
+
+
+    function setTokenContractAddress(address _address) external onlyOwner {
+        GoodToken goodTokenContract = GoodToken(_address);
+
+        // NOTE: verify that a contract is what we expect - https://github.com/Lunyr/crowdsale-contracts/blob/cfadd15986c30521d8ba7d5b6f57b4fefcc7ac38/contracts/LunyrToken.sol#L117
+        //require(goodTokenContract.isGoodToken);
+
+        // Set the new contract address
+        goods = goodTokenContract;
+        hasTokenContract = true;
+    }
+
+    function setMarketContractAddress(address _address) external onlyOwner {
+        BasicNFTTokenMarket basicMarketContract = BasicNFTTokenMarket(_address);
+
+        // NOTE: verify that a contract is what we expect - https://github.com/Lunyr/crowdsale-contracts/blob/cfadd15986c30521d8ba7d5b6f57b4fefcc7ac38/contracts/LunyrToken.sol#L117
+        //require(basicMarketContract.isNFTMarket);
+
+        // Set the new contract address
+        goodTokenMarket = basicMarketContract;
+        hasMarketContract = true;
     }
 
 

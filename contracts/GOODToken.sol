@@ -7,14 +7,19 @@ import './BasicNFT.sol';
 
 
 contract GoodToken is Ownable, BasicNFT {
-    bytes32 uniqueHash; //the id of the asset instance
+
+
+    bool public isGoodToken = true;
+
     address owner;
-    bytes32 typeCreationHash;
+
     bool initialized;
 
     string public name = 'Ethergoods Asset';
     string public symbol = 'GOOD';
 
+    //  bytes32 uniqueHash; //the id of the asset instance
+    //  bytes32 typeCreationHash;
 
     //similar to LAND but X is the goodType and Y is the instanceId of the token
 
