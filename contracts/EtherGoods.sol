@@ -95,10 +95,11 @@ contract EtherGoods is Ownable {
         hasMarketContract = true;
     }
 
+    //costs 20K gas to store a peice of data
 
 		function registerNewGoodType( bytes32  goodTypeName,   uint256 totalSupply, uint256 claimPrice ) public
 		{
-      if( (goodTypeName).length > 32) revert();
+      //if( (goodTypeName).length > 32) revert();
       uint256 typeId = uint256(keccak256( goodTypeName ));
       if(totalSupply < 1) revert();
 			if(claimPrice < 0) revert();
@@ -106,19 +107,19 @@ contract EtherGoods is Ownable {
 
       //disallow timing attack
       if(goodTypes[typeId].initialized) revert();
-			goodTypes[typeId].initialized = true;
 
-    	goodTypes[typeId].creator = msg.sender; //usually msg.sender
+      goodTypes[typeId] = GoodType({
+         initialized:true,
+         creator:msg.sender,
+         typeId: typeId,
+         name: goodTypeName,
+         totalSupply: totalSupply,
+         nextSupplyIndexToSell: 0,
+         claimPrice: claimPrice,
+         claimsEnabled: true,
+         description: ""
+        });
 
-			goodTypes[typeId].totalSupply = totalSupply;
-			goodTypes[typeId].nextSupplyIndexToSell = 0;
-      goodTypes[typeId].typeId = typeId;
-
-      goodTypes[typeId].name = goodTypeName;
-    //  goodTypes[typeId].description = description;
-
-			goodTypes[typeId].claimPrice = claimPrice; //price in wei to buy an instance
-      goodTypes[typeId].claimsEnabled = true; //owners switch for allowing sales
 
 			RegisterGood(msg.sender,typeId);
 		}
