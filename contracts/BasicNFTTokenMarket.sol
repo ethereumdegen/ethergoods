@@ -7,7 +7,9 @@ contract BasicNFTTokenMarket is Ownable  {
 
   address owner;
   BasicNFT public tokenContract;
-  uint256 public ownerCut;
+  //uint256 public ownerCut;
+
+  bool public isNFTMarket = true;
 
   bool hasTokenContract = false;
 
@@ -26,40 +28,19 @@ contract BasicNFTTokenMarket is Ownable  {
 
 
 
-  function BasicNFTTokenMarket(address _nftAddress, uint256 _cut) public onlyOwner {
-      require(_cut <= 10000);
-      ownerCut = _cut;
-
-      BasicNFT basicNFTContract = BasicNFT(_nftAddress);
-      //require(candidateContract.supportsInterface(InterfaceSignature_ERC721));
-      tokenContract = basicNFTContract;
-      hasTokenContract = true;
-  }
 
   function setTokenContractAddress(address _address) external onlyOwner {
-      BasicNFT basicNFTContract = BasicNFT(_address);
+      BasicNFT goodTokenContract = BasicNFT(_address);
 
       // NOTE: verify that a contract is what we expect - https://github.com/Lunyr/crowdsale-contracts/blob/cfadd15986c30521d8ba7d5b6f57b4fefcc7ac38/contracts/LunyrToken.sol#L117
-      //require(candidateContract.isSaleClockAuction());
+      //require(goodTokenContract.isGoodToken);
 
       // Set the new contract address
-      tokenContract = basicNFTContract;
+      tokenContract = goodTokenContract;
       hasTokenContract = true;
   }
 
-  // Array of owned tokens for a user
-/*  mapping(address => uint[]) public ownedTokens;
-  mapping(address => uint) _virtualLength;
-  mapping(uint => uint) _tokenIndexInOwnerArray;
 
-  // Mapping from token ID to owner
-  mapping(uint => address) public tokenOwner;
-
-  // Allowed transfers for a token (only one at a time)
-  mapping(uint => address) public allowedTransfer;
-
-  // Metadata associated with each token
-  mapping(uint => string) public _tokenMetadata;*/
 
   struct Offer {
       bool isForSale;
@@ -90,13 +71,13 @@ contract BasicNFTTokenMarket is Ownable  {
 
 
 
-  function tokenContractExists() public returns (bool){
+  function tokenContractExists() public view returns (bool){
     return hasTokenContract;
   }
 
 
   //tokenId is the keccak of the typeId and instanceId
-  function tokenExists(uint tokenId) public constant returns (bool) {
+  function tokenExists(uint tokenId) public view returns (bool) {
      return tokenContract.tokenOwner(tokenId) != 0x0;
    }
 

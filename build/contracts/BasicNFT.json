@@ -454,7 +454,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 2130,
+          "SourceUnit": 1385,
           "absolutePath": "/home/andy/dev/ethergoods/contracts/NFT.sol",
           "file": "./NFT.sol",
           "scope": 488,
@@ -470,16 +470,16 @@
       {
         "attributes": {
           "contractDependencies": [
-            2090,
-            2129
+            1345,
+            1384
           ],
           "contractKind": "contract",
           "documentation": null,
           "fullyImplemented": true,
           "linearizedBaseContracts": [
             487,
-            2129,
-            2090
+            1384,
+            1345
           ],
           "name": "BasicNFT",
           "scope": 488
@@ -496,7 +496,7 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "NFT",
-                  "referencedDeclaration": 2090,
+                  "referencedDeclaration": 1345,
                   "type": "contract NFT"
                 },
                 "id": 3,
@@ -519,7 +519,7 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "NFTEvents",
-                  "referencedDeclaration": 2129,
+                  "referencedDeclaration": 1384,
                   "type": "contract NFTEvents"
                 },
                 "id": 5,
@@ -850,7 +850,7 @@
               "payable": false,
               "scope": 487,
               "stateMutability": "view",
-              "superFunction": 2031,
+              "superFunction": 1286,
               "visibility": "public"
             },
             "children": [
@@ -946,7 +946,7 @@
               "payable": false,
               "scope": 487,
               "stateMutability": "view",
-              "superFunction": 2038,
+              "superFunction": 1293,
               "visibility": "public"
             },
             "children": [
@@ -1093,7 +1093,7 @@
               "payable": false,
               "scope": 487,
               "stateMutability": "view",
-              "superFunction": 2047,
+              "superFunction": 1302,
               "visibility": "public"
             },
             "children": [
@@ -1219,7 +1219,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2200,
+                              "referencedDeclaration": 1455,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -2125,7 +2125,7 @@
               "payable": false,
               "scope": 487,
               "stateMutability": "view",
-              "superFunction": 2054,
+              "superFunction": 1309,
               "visibility": "public"
             },
             "children": [
@@ -2272,7 +2272,7 @@
               "payable": false,
               "scope": 487,
               "stateMutability": "nonpayable",
-              "superFunction": 2061,
+              "superFunction": 1316,
               "visibility": "public"
             },
             "children": [
@@ -2376,7 +2376,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2200,
+                              "referencedDeclaration": 1455,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -2460,7 +2460,7 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 2197,
+                                      "referencedDeclaration": 1452,
                                       "type": "msg",
                                       "value": "msg"
                                     },
@@ -2638,7 +2638,7 @@
               "payable": false,
               "scope": 487,
               "stateMutability": "nonpayable",
-              "superFunction": 2066,
+              "superFunction": 1321,
               "visibility": "public"
             },
             "children": [
@@ -2716,7 +2716,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2200,
+                              "referencedDeclaration": 1455,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -2800,7 +2800,7 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 2197,
+                                      "referencedDeclaration": 1452,
                                       "type": "msg",
                                       "value": "msg"
                                     },
@@ -2936,7 +2936,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 2197,
+                                  "referencedDeclaration": 1452,
                                   "type": "msg",
                                   "value": "msg"
                                 },
@@ -2995,7 +2995,7 @@
               "payable": false,
               "scope": 487,
               "stateMutability": "nonpayable",
-              "superFunction": 2075,
+              "superFunction": 1330,
               "visibility": "public"
             },
             "children": [
@@ -3125,7 +3125,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2200,
+                              "referencedDeclaration": 1455,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -3248,7 +3248,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2200,
+                              "referencedDeclaration": 1455,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -3332,7 +3332,7 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 2197,
+                                      "referencedDeclaration": 1452,
                                       "type": "msg",
                                       "value": "msg"
                                     },
@@ -3510,7 +3510,7 @@
               "payable": false,
               "scope": 487,
               "stateMutability": "nonpayable",
-              "superFunction": 2082,
+              "superFunction": 1337,
               "visibility": "public"
             },
             "children": [
@@ -3614,7 +3614,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2200,
+                              "referencedDeclaration": 1455,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -3655,7 +3655,7 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 2197,
+                                      "referencedDeclaration": 1452,
                                       "type": "msg",
                                       "value": "msg"
                                     },
@@ -4022,7 +4022,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2120,
+                              "referencedDeclaration": 1375,
                               "type": "function (address,address,uint256)",
                               "value": "Approval"
                             },
@@ -4280,7 +4280,7 @@
               "payable": false,
               "scope": 487,
               "stateMutability": "view",
-              "superFunction": 2089,
+              "superFunction": 1344,
               "visibility": "public"
             },
             "children": [
@@ -4531,7 +4531,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2200,
+                              "referencedDeclaration": 1455,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -4572,7 +4572,7 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 2197,
+                                      "referencedDeclaration": 1452,
                                       "type": "msg",
                                       "value": "msg"
                                     },
@@ -4759,7 +4759,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2128,
+                              "referencedDeclaration": 1383,
                               "type": "function (uint256,address,string memory)",
                               "value": "MetadataUpdated"
                             },
@@ -4799,7 +4799,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 2197,
+                                  "referencedDeclaration": 1452,
                                   "type": "msg",
                                   "value": "msg"
                                 },
@@ -5212,7 +5212,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2112,
+                              "referencedDeclaration": 1367,
                               "type": "function (uint256,address,address)",
                               "value": "Transferred"
                             },
@@ -5463,7 +5463,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2120,
+                              "referencedDeclaration": 1375,
                               "type": "function (address,address,uint256)",
                               "value": "Approval"
                             },
@@ -5681,7 +5681,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 2200,
+                              "referencedDeclaration": 1455,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -7112,5 +7112,5 @@
   },
   "networks": {},
   "schemaVersion": "1.0.1",
-  "updatedAt": "2018-01-09T21:40:16.874Z"
+  "updatedAt": "2018-01-10T01:22:07.109Z"
 }
