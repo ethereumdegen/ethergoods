@@ -10,7 +10,7 @@ import './BasicNFTTokenMarket.sol';
 
 contract EtherGoods is Ownable {
 
-    address owner;
+    //address public owner;
 
   //  string public standard = 'EtherGoods';
     string public name = 'EtherGoods';
@@ -42,7 +42,7 @@ contract EtherGoods is Ownable {
 
 
 
-    mapping (uint256 => GoodType) goodTypes;
+    mapping (uint256 => GoodType) public goodTypes;
 
 
     // https://github.com/ethereum/eips/issues/721
