@@ -191,7 +191,7 @@ contract EtherGoods is Ownable {
       uint256 instanceId = goodTypes[typeId].nextSupplyIndexToSell;
       goodTypes[typeId].nextSupplyIndexToSell++;
 
-      uint256 memory metadata = typeId;
+      uint256 metadata = typeId;
 	    goods.claimGoodToken(msg.sender,goods.buildTokenId(typeId,instanceId),metadata);
 
       //Content creator gets claim eth
