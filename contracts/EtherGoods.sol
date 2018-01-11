@@ -162,7 +162,7 @@ contract EtherGoods is Ownable {
 
 		}
 
-		function setClaimsPrice(uint claimPrice, uint256 typeId) public
+		function setClaimsPrice(uint256 claimPrice, uint256 typeId) public
 		{
 				if(!goodTypes[typeId].initialized) revert();
 				if(goodTypes[typeId].creator != msg.sender) revert(); //must own the registration to transfer it
