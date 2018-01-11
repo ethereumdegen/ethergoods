@@ -4,11 +4,8 @@ import './BasicNFT.sol';
 
 // SEE https://github.com/decentraland/land/tree/master/contracts
 
-
-
 contract GoodToken is Ownable, BasicNFT {
-
-
+ 
     bool public isGoodToken = true;
 
     address owner;
@@ -38,13 +35,9 @@ contract GoodToken is Ownable, BasicNFT {
         Created(tokenId, beneficiary, _metadata);
       }
 
-      //this returns the GoodTypeId since that is what the metadata is 
+      //this returns the GoodTypeId since that is what the metadata is
     function goodMetadata(uint typeId, uint instanceId) constant public returns (uint256) {
         return _tokenMetadata[buildTokenId(typeId,instanceId)];
-    }
-
-    function buildTokenId(uint typeId, uint instanceId) public pure returns (uint256) {
-      return uint256(keccak256(typeId, '|', instanceId));
     }
 
     function exists(uint typeId, uint instanceId) public constant returns (bool) {
@@ -53,6 +46,10 @@ contract GoodToken is Ownable, BasicNFT {
 
      function ownerOfToken(uint typeId, uint instanceId) public constant returns (address) {
        return tokenOwner[buildTokenId(typeId,instanceId)];
+     }
+
+     function buildTokenId(uint typeId, uint instanceId) public pure returns (uint256) {
+       return uint256(keccak256(typeId, '|', instanceId));
      }
 
 }

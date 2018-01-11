@@ -20,12 +20,11 @@ contract BasicNFTTokenMarket is Ownable  {
 
   event SupplyOffered(uint256 indexed typeId, uint minValue, address indexed toAddress);
   event SupplyBidEntered(uint256 indexed typeId, uint value, address indexed fromAddress);
-  event SupplyBidWithdrawn(uint256 indexed typeId, uint value, address indexed fromAddress);
   event SupplyBought(uint256 indexed typeId,  uint value, address fromAddress, address indexed toAddress);
   event SupplySold(uint256 indexed typeId, uint value, address indexed fromAddress, address toAddress);
 
   event SupplyNoLongerForSale(uint256 indexed typeId);
-//  event BidNoLongeOffered(uint256 indexed typeId);
+  event SupplyBidWithdrawn(uint256 indexed typeId, uint value, address indexed fromAddress);
 
 
 
@@ -242,7 +241,7 @@ contract BasicNFTTokenMarket is Ownable  {
     //prevent re-entrancy
     pendingWithdrawals[msg.sender] = 0;
     if( amountToWithdraw <= 0 ) revert();
- 
+
     msg.sender.transfer( amountToWithdraw );
 
   }
