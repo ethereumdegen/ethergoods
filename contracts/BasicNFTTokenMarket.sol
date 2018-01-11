@@ -18,12 +18,12 @@ contract BasicNFTTokenMarket is Ownable  {
 
   event TransferSupply(uint256 indexed typeId,address indexed from, address indexed to, uint amount);
 
-  event SupplyOffered(uint256 indexed typeId, uint minValue, address indexed toAddress);
+  //event SupplyOffered(uint256 indexed typeId, uint minValue, address indexed toAddress);
   event SupplyBidEntered(uint256 indexed typeId, uint value, address indexed fromAddress);
-  event SupplyBought(uint256 indexed typeId,  uint value, address fromAddress, address indexed toAddress);
+  //event SupplyBought(uint256 indexed typeId,  uint value, address fromAddress, address indexed toAddress);
   event SupplySold(uint256 indexed typeId, uint value, address indexed fromAddress, address toAddress);
 
-  event SupplyNoLongerForSale(uint256 indexed typeId);
+  //event SupplyNoLongerForSale(uint256 indexed typeId);
   event SupplyBidWithdrawn(uint256 indexed typeId, uint value, address indexed fromAddress);
 
 
@@ -67,7 +67,7 @@ contract BasicNFTTokenMarket is Ownable  {
   mapping(address => Bid[]) public bids;
 
   // A record of supplies that are offered for sale at a specific minimum value, and perhaps to a specific person
-  mapping (uint256 => Offer) public supplyOfferedForSale;
+  //mapping (uint256 => Offer) public supplyOfferedForSale;
 
   // A record of the highest  bid
   mapping (uint256 => Bid) public supplyBids;
@@ -204,8 +204,8 @@ contract BasicNFTTokenMarket is Ownable  {
       tokenContract.transferFrom(seller,bid.bidder,tokenId);
       TransferSupply(tokenId, seller, bid.bidder, 1);
 
-      supplyOfferedForSale[tokenId] = Offer(false, tokenId, bid.bidder, 0, 0x0);
-      SupplyNoLongerForSale(tokenId);
+      //supplyOfferedForSale[tokenId] = Offer(false, tokenId, bid.bidder, 0, 0x0);
+      //SupplyNoLongerForSale(tokenId);
 
       uint256 amount = bid.value;
 
@@ -214,7 +214,7 @@ contract BasicNFTTokenMarket is Ownable  {
       pendingWithdrawals[owner] += market_fee;
       pendingWithdrawals[seller] += safesub(amount, market_fee);
 
-      SupplyBought(tokenId, bid.value, seller, bid.bidder);
+      //SupplyBought(tokenId, bid.value, seller, bid.bidder);
       SupplySold(tokenId, bid.value, seller, bid.bidder);
   }
 
