@@ -27,7 +27,7 @@ contract GoodToken is Ownable, BasicNFT {
     }
 
     function claimGoodToken(address beneficiary, uint tokenId, uint256 _metadata) public {
-        if(msg.sender != masterContract) revert()
+        if(msg.sender != masterContract) revert();
         require(tokenOwner[tokenId] == 0);
        _claimNewToken(beneficiary, tokenId, _metadata);
      }

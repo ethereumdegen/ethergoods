@@ -190,30 +190,32 @@ contract EtherGoods is Ownable {
        //uniqueHash =typeId
 		function claimGood(uint256 typeId) public payable
 		{
-			if(!goodTypes[typeId].initialized) revert(); //if the good isnt registered
-			if(goodTypes[typeId].nextSupplyIndexToSell >= goodTypes[typeId].totalSupply) revert(); // the good is all claimed
+      GoodType memory goodType = goodTypes[typeId];
 
-      if (msg.value < goodTypes[typeId].claimPrice) revert();
-      if (goodTypes[typeId].claimPrice < 0) revert();
-      if (msg.value < 0) revert();
-      if (goods.exists(typeId, goodTypes[typeId].nextSupplyIndexToSell)) revert();
-
-      uint256 instanceId = goodTypes[typeId].nextSupplyIndexToSell;
+        //prevent timing attack
       goodTypes[typeId].nextSupplyIndexToSell++;
+			if(!goodType.initialized) revert(); //if the good isnt registered
+			if(goodType.nextSupplyIndexToSell >= goodType.totalSupply) revert(); // the good is all claimed
+
+      if (msg.value < goodType.claimPrice) revert();
+      if (goodType.claimPrice < 0) revert();
+      if (msg.value < 0) revert();
+      if (goods.exists(typeId, goodType.nextSupplyIndexToSell)) revert();
+
+      uint256 instanceId = goodType.nextSupplyIndexToSell;
+
 
       uint256 metadata = typeId;
 	    goods.claimGoodToken(msg.sender,goods.buildTokenId(typeId,instanceId),metadata);
 
       //Content creator gets claim eth
-      pendingWithdrawals[goodTypes[typeId].creator] += goodTypes[typeId].claimPrice;
+      pendingWithdrawals[goodType.creator] += goodType.claimPrice;
 
       //refund overspends
-      pendingWithdrawals[goodTypes[typeId].creator] += (msg.value - goodTypes[typeId].claimPrice);
+      pendingWithdrawals[goodType.creator] += (msg.value - goodType.claimPrice);
 
 
-			ClaimGood(msg.sender, typeId, goodTypes[typeId].nextSupplyIndexToSell );
-
-
+			ClaimGood(msg.sender, typeId, goodType.nextSupplyIndexToSell );
 
 
 		}
@@ -221,12 +223,17 @@ contract EtherGoods is Ownable {
 
 
 
-    function withdrawPendingBalance() public
-    {
-      uint256 amountToWithdraw = pendingWithdrawals[msg.sender];
-      pendingWithdrawals[msg.sender] = 0;
-      msg.sender.transfer( amountToWithdraw );
-    }
+      function withdrawPendingBalance() public
+      {
 
+        uint256 amountToWithdraw = pendingWithdrawals[msg.sender];
+
+        //prevent re-entrancy
+        pendingWithdrawals[msg.sender] = 0;
+        if( amountToWithdraw <= 0 ) revert();
+
+        msg.sender.transfer( amountToWithdraw );
+
+      }
 
 }

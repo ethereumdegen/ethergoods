@@ -48,5 +48,7 @@ solidityBytes32ToString(bytes32)
 
 
   return result;
-},
+} 
+
+
 }

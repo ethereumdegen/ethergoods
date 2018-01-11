@@ -67,9 +67,9 @@ contract BasicNFT is NFT, NFTEvents {
   //the user that indirectly calls this still needs to own the token
   function approve(address beneficiary, uint tokenId) public {
     //require(msg.sender == tokenOwner[tokenId]);
-    require(tx.origin == tokenOwner[tokenId])
+    require(tx.origin == tokenOwner[tokenId]);
 
-    if (allowedTransfer[tokenId] != 0) {
+    if(allowedTransfer[tokenId] != 0) {
       allowedTransfer[tokenId] = 0;
     }
     allowedTransfer[tokenId] = beneficiary;

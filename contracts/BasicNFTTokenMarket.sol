@@ -47,14 +47,15 @@ contract BasicNFTTokenMarket is Ownable  {
   }
 
 
-
+/*
   struct Offer {
       bool isForSale;
       uint256 tokenId;
       address seller;
-      uint256 minValue;          // in ether
+      uint256 minValue;
       address onlySellTo;     // specify to sell only to a specific person
   }
+*/
 
   struct Bid {
       bool hasBid;
