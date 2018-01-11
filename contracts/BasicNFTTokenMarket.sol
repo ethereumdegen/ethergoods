@@ -89,11 +89,6 @@ contract BasicNFTTokenMarket is Ownable  {
       if(!tokenExists(tokenId)) revert(); //if the good isnt registered
       if(tokenContract.ownerOf(tokenId) != msg.sender ) revert(); //must have balance of the token
 
-    /*  if(supplyOfferedForSale[uniqueHash].isForSale)
-      {
-        if(minSalePriceInWei > supplyOfferedForSale[uniqueHash].minValue) revert();
-      }*/
-
       supplyOfferedForSale[tokenId] = Offer(true, tokenId, msg.sender, minSalePriceInWei, 0x0);
       SupplyOffered(tokenId, minSalePriceInWei, 0x0);
   }
@@ -113,12 +108,9 @@ contract BasicNFTTokenMarket is Ownable  {
     if(tokenContract.ownerOf(tokenId) != msg.sender ) revert();
     if(supplyOfferedForSale[tokenId].seller != msg.sender) revert(); //must be the owner of this supply
 
-
      supplyOfferedForSale[tokenId] = Offer(false, tokenId, msg.sender, 0, 0x0);
      SupplyNoLongerForSale(tokenId);
   }
-
-
 
 
   function buySupply(uint256 tokenId) public payable {
@@ -126,7 +118,7 @@ contract BasicNFTTokenMarket is Ownable  {
       Offer memory offer = supplyOfferedForSale[tokenId];
 
     //  if(supplyIndex >= goods[uniqueHash].totalSupply) revert();
-                      // supply not actually for sale
+
       if (offer.onlySellTo != 0x0 && offer.onlySellTo != msg.sender) revert();  //  not supposed to be sold to this user
       if (msg.value < offer.minValue) revert();      // Didn't send enough ETH
       if (offer.minValue < 0) revert();
@@ -134,10 +126,9 @@ contract BasicNFTTokenMarket is Ownable  {
 
       //prevent re-entrancy
       supplyOfferedForSale[tokenId] = Offer(false, tokenId, msg.sender, 0, 0x0);
-      SupplyNoLongerForSale(tokenId)
+      SupplyNoLongerForSale(tokenId);
       if (!offer.isForSale) revert();
 
-  //    if (offer.seller != goods[uniqueHash].creator) revert(); // Seller no longer owner of
 
       address seller = offer.seller;
 
@@ -148,7 +139,7 @@ contract BasicNFTTokenMarket is Ownable  {
       uint256 market_fee = safediv(amount,50);
 
       pendingWithdrawals[owner] += market_fee;
-      pendingWithdrawals[seller] += (amount - market_fee);
+      pendingWithdrawals[seller] += safesub(amount, market_fee);
 
       SupplyBought(tokenId, amount, seller, msg.sender);
       SupplySold(tokenId, amount, seller, msg.sender);
@@ -159,7 +150,7 @@ contract BasicNFTTokenMarket is Ownable  {
       if (bid.bidder == msg.sender) {
           //prevent re-entrancy
           supplyBids[tokenId] = Bid(false, tokenId, 0x0, 0);
-
+          SupplyBidWithdrawn(tokenId, bid.value, bid.bidder);
           // Kill bid and refund value
           pendingWithdrawals[bid.bidder] += bid.value;
 
@@ -204,14 +195,14 @@ contract BasicNFTTokenMarket is Ownable  {
       TransferSupply(tokenId, seller, bid.bidder, 1);
 
       supplyOfferedForSale[tokenId] = Offer(false, tokenId, bid.bidder, 0, 0x0);
-      SupplyNoLongerForSale(tokenId)
+      SupplyNoLongerForSale(tokenId);
 
       uint256 amount = bid.value;
 
       uint256 market_fee = safediv(amount,50);
 
       pendingWithdrawals[owner] += market_fee;
-      pendingWithdrawals[seller] += (amount - market_fee);
+      pendingWithdrawals[seller] += safesub(amount, market_fee);
 
       SupplyBought(tokenId, bid.value, seller, bid.bidder);
       SupplySold(tokenId, bid.value, seller, bid.bidder);
