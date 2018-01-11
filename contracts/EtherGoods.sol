@@ -19,6 +19,10 @@ contract EtherGoods is Ownable {
     bool public hasTokenContract = false;
     bool public hasMarketContract = false;
 
+    bool public lockTokenContract = false;
+    bool public lockMarketContract = false;
+
+
     // GOODToken contract that holds the registry of good instances
     GoodToken public goods;
 
@@ -74,25 +78,30 @@ contract EtherGoods is Ownable {
 
 
     function setTokenContractAddress(address _address) external onlyOwner {
+        if(lockTokenContract) revert();
         GoodToken goodTokenContract = GoodToken(_address);
-
-        // NOTE: verify that a contract is what we expect - https://github.com/Lunyr/crowdsale-contracts/blob/cfadd15986c30521d8ba7d5b6f57b4fefcc7ac38/contracts/LunyrToken.sol#L117
-        //require(goodTokenContract.isGoodToken);
-
         // Set the new contract address
         goods = goodTokenContract;
         hasTokenContract = true;
     }
 
+    function lockTokenContractAddress() external onlyOwner {
+        if(!hasTokenContract) revert();
+        lockTokenContract = true;
+    }
+
     function setMarketContractAddress(address _address) external onlyOwner {
+        if(lockMarketContract) revert();
         BasicNFTTokenMarket basicMarketContract = BasicNFTTokenMarket(_address);
-
-        // NOTE: verify that a contract is what we expect - https://github.com/Lunyr/crowdsale-contracts/blob/cfadd15986c30521d8ba7d5b6f57b4fefcc7ac38/contracts/LunyrToken.sol#L117
-        //require(basicMarketContract.isNFTMarket);
-
         // Set the new contract address
         goodTokenMarket = basicMarketContract;
         hasMarketContract = true;
+    }
+
+
+    function lockMarketContractAddress() external onlyOwner {
+        if(!hasMarketContract) revert();
+        lockMarketContract = true;
     }
 
     //costs 20K gas to store a peice of data
