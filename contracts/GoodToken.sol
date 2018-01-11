@@ -5,10 +5,12 @@ import './BasicNFT.sol';
 // SEE https://github.com/decentraland/land/tree/master/contracts
 
 contract GoodToken is Ownable, BasicNFT {
- 
+
     bool public isGoodToken = true;
 
     address owner;
+
+    address masterContract;
 
     bool initialized;
 
@@ -20,9 +22,13 @@ contract GoodToken is Ownable, BasicNFT {
 
     //similar to LAND but X is the goodType and Y is the instanceId of the token
 
+    function setMasterContractAddress(address _address) external onlyOwner {
+        masterContract = _address;
+    }
 
-    function claimGoodToken(address beneficiary, uint tokenId, uint256 _metadata) onlyOwner public {
-       require(tokenOwner[tokenId] == 0);
+    function claimGoodToken(address beneficiary, uint tokenId, uint256 _metadata) public {
+        if(msg.sender != masterContract) revert()
+        require(tokenOwner[tokenId] == 0);
        _claimNewToken(beneficiary, tokenId, _metadata);
      }
 

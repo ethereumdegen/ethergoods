@@ -3,30 +3,8 @@ var TokenMarket = artifacts.require("./BasicNFTTokenMarket.sol");
 var EtherGoods = artifacts.require("./EtherGoods.sol");
 
 var ethUtil =  require('ethereumjs-util');
+var solidityHelper =  require('solidity-helepr');
 
-
-/*
-  var expectThrow = async function (promise) {
-    try {
-      await promise;
-    } catch (error) {
-      // TODO: Check jump destination to destinguish between a throw
-      //       and an actual invalid jump.
-      const invalidOpcode = error.message.search('invalid opcode') >= 0;
-      const invalidJump = error.message.search('invalid JUMP') >= 0;
-      // TODO: When we contract A calls contract B, and B throws, instead
-      //       of an 'invalid jump', we get an 'out of gas' error. How do
-      //       we distinguish this from an actual out of gas event? (The
-      //       testrpc log actually show an 'invalid jump' event.)
-      const outOfGas = error.message.search('out of gas') >= 0;
-      assert(
-        invalidOpcode || invalidJump || outOfGas,
-        "Expected throw, got '" + error + "' instead",
-      );
-      return;
-    }
-    assert.fail('Expected throw not received');
-  }; */
 
 
 contract('EtherGoods', function(accounts) {
@@ -70,18 +48,20 @@ console.log( tokenContract )
   await contract.setMarketContractAddress(accounts[0],marketContract);
   await contract.setTokenContractAddress(accounts[0],tokenContract);
 
-  await contract.registerNewGoodType( "canoe",5,400);
+  var passName= "canoe";
 
-  var name_hash = ethUtil.bufferToHex(ethUtil.sha3("canoe"))
+  await contract.registerNewGoodType(passName,5,400);
 
-  var good_type_record = await contract.goodTypes.call(name_hash);
+  var passNameBytes32 = solidityHelper.stringToSolidityBytes32(passName)
+  const nameHash  = web3.sha3(web3.toHex(passNameBytes32), {encoding:"hex"});
+
+  var good_type_record = await contract.goodTypes.call(nameHash);
 
   console.log("Record");
    console.log("Good Type: " + good_type_record);
 
 
-
-  assert.equal(true, good_type_record[0].initialized);
+  assert.equal(true, good_type_record );
 
 }),
 

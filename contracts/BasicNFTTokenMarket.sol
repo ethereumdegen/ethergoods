@@ -11,8 +11,8 @@ contract BasicNFTTokenMarket is Ownable  {
 
   bool public isNFTMarket = true;
 
-  bool hasTokenContract = false;
-  bool lockTokenContract = false;
+  bool public hasTokenContract = false;
+  bool public lockTokenContract = false;
 
   mapping (address => uint) public pendingWithdrawals;
 
@@ -85,6 +85,8 @@ contract BasicNFTTokenMarket is Ownable  {
      return tokenContract.tokenOwner(tokenId) != 0x0;
    }
 
+/*  Not compatible with BasicNFT contract - requires specific approval
+
   function offerSupplyForSale(uint256 tokenId, uint minSalePriceInWei) public {
       if(!tokenExists(tokenId)) revert(); //if the good isnt registered
       if(tokenContract.ownerOf(tokenId) != msg.sender ) revert(); //must have balance of the token
@@ -92,7 +94,9 @@ contract BasicNFTTokenMarket is Ownable  {
       supplyOfferedForSale[tokenId] = Offer(true, tokenId, msg.sender, minSalePriceInWei, 0x0);
       SupplyOffered(tokenId, minSalePriceInWei, 0x0);
   }
+  */
 
+/*
   function offerSupplyForSaleToAddress(uint256 tokenId, uint minSalePriceInWei, address toAddress) public {
     if(!tokenExists(tokenId)) revert(); //if the good isnt registered
     if(tokenContract.ownerOf(tokenId) != msg.sender ) revert(); //must have balance of the token
@@ -100,8 +104,11 @@ contract BasicNFTTokenMarket is Ownable  {
     supplyOfferedForSale[tokenId] = Offer(true, tokenId, msg.sender, minSalePriceInWei, toAddress);
     SupplyOffered(tokenId, minSalePriceInWei, toAddress);
 
+    tokenContract.transfer(msg.sender,tokenId);
   }
+*/
 
+/*
 
   function supplyNoLongerForSale(uint256 tokenId) public {
     if(!tokenExists(tokenId)) revert(); //if the good isnt registered
@@ -112,7 +119,9 @@ contract BasicNFTTokenMarket is Ownable  {
      SupplyNoLongerForSale(tokenId);
   }
 
+*/
 
+/*
   function buySupply(uint256 tokenId) public payable {
       if(!tokenExists(tokenId)) revert();
       Offer memory offer = supplyOfferedForSale[tokenId];
@@ -156,7 +165,7 @@ contract BasicNFTTokenMarket is Ownable  {
 
       }
   }
-
+*/
 
 
   function enterBidForSupply(uint256 tokenId) public payable {
@@ -191,7 +200,8 @@ contract BasicNFTTokenMarket is Ownable  {
       SupplyBidWithdrawn(tokenId, bid.value, msg.sender);
       if (bid.value == 0) revert();
 
-      tokenContract.transfer(bid.bidder,tokenId); //give token to bidder
+      tokenContract.approve(bid.bidder,tokenId);
+      tokenContract.transferFrom(seller,bid.bidder,tokenId);
       TransferSupply(tokenId, seller, bid.bidder, 1);
 
       supplyOfferedForSale[tokenId] = Offer(false, tokenId, bid.bidder, 0, 0x0);
