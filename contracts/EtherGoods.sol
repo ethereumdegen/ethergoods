@@ -190,19 +190,21 @@ contract EtherGoods is Ownable {
        //uniqueHash =typeId
 		function claimGood(uint256 typeId) public payable
 		{
-      GoodType memory goodType = goodTypes[typeId];
+      GoodType memory goodType = goodTypes[typeId];// this is a pointer reference
+
+      uint256 instanceId = goodType.nextSupplyIndexToSell;
 
         //prevent timing attack
       goodTypes[typeId].nextSupplyIndexToSell++;
 			if(!goodType.initialized) revert(); //if the good isnt registered
-			if(goodType.nextSupplyIndexToSell >= goodType.totalSupply) revert(); // the good is all claimed
+			if(instanceId >= goodType.totalSupply) revert(); // the good is all claimed
 
       if (msg.value < goodType.claimPrice) revert();
       if (goodType.claimPrice < 0) revert();
       if (msg.value < 0) revert();
-      if (goods.exists(typeId, goodType.nextSupplyIndexToSell)) revert();
+      if (goods.exists(typeId, instanceId)) revert();
 
-      uint256 instanceId = goodType.nextSupplyIndexToSell;
+      //uint256 instanceId = goodType.nextSupplyIndexToSell;
 
 
       uint256 metadata = typeId;
@@ -212,16 +214,13 @@ contract EtherGoods is Ownable {
       pendingWithdrawals[goodType.creator] += goodType.claimPrice;
 
       //refund overspends
-      pendingWithdrawals[goodType.creator] += (msg.value - goodType.claimPrice);
+      pendingWithdrawals[goodType.creator] += safesub(msg.value, goodType.claimPrice);
 
 
 			ClaimGood(msg.sender, typeId, goodType.nextSupplyIndexToSell );
 
 
 		}
-
-
-
 
       function withdrawPendingBalance() public
       {
@@ -234,6 +233,11 @@ contract EtherGoods is Ownable {
 
         msg.sender.transfer( amountToWithdraw );
 
+      }
+
+      function safesub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
       }
 
 }
