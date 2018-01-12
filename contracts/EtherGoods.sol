@@ -189,6 +189,15 @@ contract EtherGoods is Ownable {
 		{
       GoodType memory goodType = goodTypes[typeId];// this is a pointer reference
 
+      uint256 instanceId = goodType.nextSupplyIndexToSell;
+
+        //prevent timing attack
+      goodTypes[typeId].nextSupplyIndexToSell++;
+			if(!goodType.initialized) revert(); //if the good isnt registered
+			if(instanceId >= goodType.totalSupply) revert(); // the good is all claimed
+
+        //WY DOES THIS REVERT
+
       ClaimGood(msg.sender, typeId, goodType.nextSupplyIndexToSell );
 
     }

@@ -74,7 +74,7 @@ contract('EtherGoods', function(accounts) {
   //var result = contract.claimGood(typeId, {value: web3utils.toWei('1')});
 
 
-var result =   await contract.claimGoodTest(typeId, {from: accounts[0],value:web3.utils.toWei('1') } )
+var result =   await contract.claimGoodTest(typeId, {from: accounts[0],value:web3.utils.toWei('1') }, function(result){} )
 
   /*var dataBundle = contract.claimGood.getData(typeId)  ;
 
