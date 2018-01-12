@@ -56,16 +56,20 @@ contract BasicNFT is NFT, NFTEvents {
     return _transfer(tokenOwner[tokenId], msg.sender, tokenId);
   }
 
+  //can call this remotely through another contract by using approve
   function transferFrom(address from, address to, uint tokenId) public {
     require(tokenOwner[tokenId] == from);
-    require(allowedTransfer[tokenId] == msg.sender);
+    require(allowedTransfer[tokenId] == to);
     return _transfer(tokenOwner[tokenId], to, tokenId);
   }
 
+  //can call this remotely through another contract to perform transferFrom
+  //the user that indirectly calls this still needs to own the token
   function approve(address beneficiary, uint tokenId) public {
-    require(msg.sender == tokenOwner[tokenId]);
+    //require(msg.sender == tokenOwner[tokenId]);
+    require(tx.origin == tokenOwner[tokenId]);
 
-    if (allowedTransfer[tokenId] != 0) {
+    if(allowedTransfer[tokenId] != 0) {
       allowedTransfer[tokenId] = 0;
     }
     allowedTransfer[tokenId] = beneficiary;

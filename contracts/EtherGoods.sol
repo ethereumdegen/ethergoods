@@ -19,6 +19,10 @@ contract EtherGoods is Ownable {
     bool public hasTokenContract = false;
     bool public hasMarketContract = false;
 
+    bool public lockTokenContract = false;
+    bool public lockMarketContract = false;
+
+
     // GOODToken contract that holds the registry of good instances
     GoodToken public goods;
 
@@ -74,36 +78,31 @@ contract EtherGoods is Ownable {
 
 
     function setTokenContractAddress(address _address) external onlyOwner {
+        if(lockTokenContract) revert();
         GoodToken goodTokenContract = GoodToken(_address);
-
-        // NOTE: verify that a contract is what we expect - https://github.com/Lunyr/crowdsale-contracts/blob/cfadd15986c30521d8ba7d5b6f57b4fefcc7ac38/contracts/LunyrToken.sol#L117
-        //require(goodTokenContract.isGoodToken);
-
         // Set the new contract address
         goods = goodTokenContract;
         hasTokenContract = true;
     }
 
+    function lockTokenContractAddress() external onlyOwner {
+        if(!hasTokenContract) revert();
+        lockTokenContract = true;
+    }
+
     function setMarketContractAddress(address _address) external onlyOwner {
+        if(lockMarketContract) revert();
         BasicNFTTokenMarket basicMarketContract = BasicNFTTokenMarket(_address);
-
-        // NOTE: verify that a contract is what we expect - https://github.com/Lunyr/crowdsale-contracts/blob/cfadd15986c30521d8ba7d5b6f57b4fefcc7ac38/contracts/LunyrToken.sol#L117
-        //require(basicMarketContract.isNFTMarket);
-
         // Set the new contract address
         goodTokenMarket = basicMarketContract;
         hasMarketContract = true;
     }
 
-    /*function bytesToAddr (bytes b) constant returns (address) {
-      uint result = 0;
-      for (uint i = b.length-1; i+1 > 0; i--) {
-        uint c = uint(b[i]);
-        uint to_inc = c * ( 16 ** ((b.length - i-1) * 2));
-        result += to_inc;
-      }
-      return address(result);
-    }*/
+
+    function lockMarketContractAddress() external onlyOwner {
+        if(!hasMarketContract) revert();
+        lockMarketContract = true;
+    }
 
     //costs 20K gas to store a peice of data
 
@@ -163,7 +162,7 @@ contract EtherGoods is Ownable {
 
 		}
 
-		function setClaimsPrice(uint claimPrice, uint256 typeId) public
+		function setClaimsPrice(uint256 claimPrice, uint256 typeId) public
 		{
 				if(!goodTypes[typeId].initialized) revert();
 				if(goodTypes[typeId].creator != msg.sender) revert(); //must own the registration to transfer it
@@ -191,30 +190,32 @@ contract EtherGoods is Ownable {
        //uniqueHash =typeId
 		function claimGood(uint256 typeId) public payable
 		{
-			if(!goodTypes[typeId].initialized) revert(); //if the good isnt registered
-			if(goodTypes[typeId].nextSupplyIndexToSell >= goodTypes[typeId].totalSupply) revert(); // the good is all claimed
+      GoodType memory goodType = goodTypes[typeId];
 
-      if (msg.value < goodTypes[typeId].claimPrice) revert();
-      if (goodTypes[typeId].claimPrice < 0) revert();
-      if (msg.value < 0) revert();
-      if (goods.exists(typeId, goodTypes[typeId].nextSupplyIndexToSell)) revert();
-
-      uint256 instanceId = goodTypes[typeId].nextSupplyIndexToSell;
+        //prevent timing attack
       goodTypes[typeId].nextSupplyIndexToSell++;
+			if(!goodType.initialized) revert(); //if the good isnt registered
+			if(goodType.nextSupplyIndexToSell >= goodType.totalSupply) revert(); // the good is all claimed
+
+      if (msg.value < goodType.claimPrice) revert();
+      if (goodType.claimPrice < 0) revert();
+      if (msg.value < 0) revert();
+      if (goods.exists(typeId, goodType.nextSupplyIndexToSell)) revert();
+
+      uint256 instanceId = goodType.nextSupplyIndexToSell;
+
 
       uint256 metadata = typeId;
 	    goods.claimGoodToken(msg.sender,goods.buildTokenId(typeId,instanceId),metadata);
 
       //Content creator gets claim eth
-      pendingWithdrawals[goodTypes[typeId].creator] += goodTypes[typeId].claimPrice;
+      pendingWithdrawals[goodType.creator] += goodType.claimPrice;
 
       //refund overspends
-      pendingWithdrawals[goodTypes[typeId].creator] += (msg.value - goodTypes[typeId].claimPrice);
+      pendingWithdrawals[goodType.creator] += (msg.value - goodType.claimPrice);
 
 
-			ClaimGood(msg.sender, typeId, goodTypes[typeId].nextSupplyIndexToSell );
-
-
+			ClaimGood(msg.sender, typeId, goodType.nextSupplyIndexToSell );
 
 
 		}
@@ -222,12 +223,17 @@ contract EtherGoods is Ownable {
 
 
 
-    function withdrawPendingBalance() public
-    {
-      uint256 amountToWithdraw = pendingWithdrawals[msg.sender];
-      pendingWithdrawals[msg.sender] = 0;
-      msg.sender.transfer( amountToWithdraw );
-    }
+      function withdrawPendingBalance() public
+      {
 
+        uint256 amountToWithdraw = pendingWithdrawals[msg.sender];
+
+        //prevent re-entrancy
+        pendingWithdrawals[msg.sender] = 0;
+        if( amountToWithdraw <= 0 ) revert();
+
+        msg.sender.transfer( amountToWithdraw );
+
+      }
 
 }

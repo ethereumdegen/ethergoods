@@ -1,6 +1,8 @@
 {
   "name": "ethergoods",
-  "engines" : { "node" : ">=7.6" }, 
+  "engines": {
+    "node": ">=7.6"
+  },
   "version": "0.1.0",
   "description": "TODO:",
   "main": "truffle.js",
@@ -26,6 +28,7 @@
   "dependencies": {
     "asyncawait": "^1.0.6",
     "ethereumjs-util": "^5.1.2",
-    "js-sha3": "^0.6.1"
+    "js-sha3": "^0.6.1",
+    "web3": "^1.0.0-beta.27"
   }
 }
