@@ -34,22 +34,14 @@ contract('EtherGoods', function(accounts) {
   it("can register a good", async function () {
 
 
-<<<<<<< HEAD
-//  var unique_hash = ethUtil.bufferToHex(ethUtil.sha3("canoeasset"));
-//  console.log('sha3')
-//  console.log(unique_hash)
-
-
 //canoe
 
 //7.3426930413956622283065143620738574142638959639431768834166324387693517887725e+76)
 
-
-=======
   var tokenContract = await GoodToken.deployed();
   var marketContract = await TokenMarket.deployed();
   var contract = await EtherGoods.deployed();
->>>>>>> 3d58dfdfa4939c35306f15236842ab8137c81cd9
+
 
   await marketContract.setTokenContractAddress(accounts[0],tokenContract);
   await contract.setMarketContractAddress(accounts[0],marketContract);
@@ -79,8 +71,23 @@ contract('EtherGoods', function(accounts) {
 
   console.log("typeId: " + typeId);
 
+  //var result = contract.claimGood(typeId, {value: web3utils.toWei('1')});
 
 
+  contract.claimGoodTest(typeId, {from: accounts[0],value:web3.utils.toWei('1') }, function() {
+            // This fires off a promise, but we're doing nothing with the result.
+            // We include an empty `then()` block to ensure the promise gets evaluated.
+        })
+
+  /*var dataBundle = contract.claimGood.getData(typeId)  ;
+
+  var result = await contract.sendTransaction({
+    to:contract,
+    data: dataBundle,
+    value: web3.utils.toWei('1'),
+  })*/
+
+  assert.equal(true, result );
 //  await contract.claimGood(typeId).send({from: '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe',value: 1000});//,{value: 1000}
 //  var token_record = await contract.goods.call(typeId);
 

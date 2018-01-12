@@ -185,8 +185,13 @@ contract EtherGoods is Ownable {
 
 		}
 
+    function claimGoodTest(uint256 typeId) public payable
+		{
+      GoodType memory goodType = goodTypes[typeId];// this is a pointer reference
 
+      ClaimGood(msg.sender, typeId, goodType.nextSupplyIndexToSell );
 
+    }
        //uniqueHash =typeId
 		function claimGood(uint256 typeId) public payable
 		{
