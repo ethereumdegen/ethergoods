@@ -74,10 +74,7 @@ contract('EtherGoods', function(accounts) {
   //var result = contract.claimGood(typeId, {value: web3utils.toWei('1')});
 
 
-  contract.claimGoodTest(typeId, {from: accounts[0],value:web3.utils.toWei('1') }, function() {
-            // This fires off a promise, but we're doing nothing with the result.
-            // We include an empty `then()` block to ensure the promise gets evaluated.
-        })
+var result =   await contract.claimGoodTest(typeId, {from: accounts[0],value:web3.utils.toWei('1') } )
 
   /*var dataBundle = contract.claimGood.getData(typeId)  ;
 
