@@ -8,11 +8,11 @@ contract GoodToken is Ownable, BasicNFT {
 
     bool public isGoodToken = true;
 
-    address owner;
+     
 
-    address masterContract;
+    address public masterContract;
 
-    bool initialized;
+    bool public initialized;
 
     string public name = 'Ethergoods Asset';
     string public symbol = 'GOOD';

@@ -34,9 +34,22 @@ contract('EtherGoods', function(accounts) {
   it("can register a good", async function () {
 
 
+<<<<<<< HEAD
+//  var unique_hash = ethUtil.bufferToHex(ethUtil.sha3("canoeasset"));
+//  console.log('sha3')
+//  console.log(unique_hash)
+
+
+//canoe
+
+//7.3426930413956622283065143620738574142638959639431768834166324387693517887725e+76)
+
+
+=======
   var tokenContract = await GoodToken.deployed();
   var marketContract = await TokenMarket.deployed();
   var contract = await EtherGoods.deployed();
+>>>>>>> 3d58dfdfa4939c35306f15236842ab8137c81cd9
 
   await marketContract.setTokenContractAddress(accounts[0],tokenContract);
   await contract.setMarketContractAddress(accounts[0],marketContract);

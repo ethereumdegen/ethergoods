@@ -57,7 +57,7 @@ contract EtherGoods is Ownable {
 
     mapping (address => uint) public pendingWithdrawals;
 
-		event RegisterGood(address indexed to, uint256 typeId);
+		event RegisterGood(address indexed to, uint256 typeId, bytes32 name, bytes32 hashh);
 		event RegistrationTransfer(address indexed from, address indexed to, uint256 typeId);
 		event ModifyClaimsEnable(address indexed owner,bool enabele,uint256 typeId);
     event ModifyClaimsPrice(address indexed owner,uint price,uint256 typeId);
@@ -130,7 +130,7 @@ contract EtherGoods is Ownable {
         });
 
 
-			RegisterGood(msg.sender,typeId);
+			RegisterGood(msg.sender,typeId,goodTypeName,keccak256( goodTypeName ));
 		}
 
   /*  function stringToBytes32(string memory source) public returns (bytes32 result)  {
