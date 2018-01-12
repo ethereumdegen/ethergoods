@@ -53,7 +53,7 @@ contract EtherGoods is Ownable {
 
     mapping (address => uint) public pendingWithdrawals;
 
-		event RegisterGood(address indexed to, uint256 typeId);
+		event RegisterGood(address indexed to, uint256 typeId, bytes32 name, bytes32 hashh);
 		event RegistrationTransfer(address indexed from, address indexed to, uint256 typeId);
 		event ModifyClaimsEnable(address indexed owner,bool enabele,uint256 typeId);
     event ModifyClaimsPrice(address indexed owner,uint price,uint256 typeId);
@@ -95,6 +95,16 @@ contract EtherGoods is Ownable {
         hasMarketContract = true;
     }
 
+    /*function bytesToAddr (bytes b) constant returns (address) {
+      uint result = 0;
+      for (uint i = b.length-1; i+1 > 0; i--) {
+        uint c = uint(b[i]);
+        uint to_inc = c * ( 16 ** ((b.length - i-1) * 2));
+        result += to_inc;
+      }
+      return address(result);
+    }*/
+
     //costs 20K gas to store a peice of data
 
 		function registerNewGoodType( bytes32  goodTypeName,   uint256 totalSupply, uint256 claimPrice ) public
@@ -121,7 +131,7 @@ contract EtherGoods is Ownable {
         });
 
 
-			RegisterGood(msg.sender,typeId);
+			RegisterGood(msg.sender,typeId,goodTypeName,keccak256( goodTypeName ));
 		}
 
   /*  function stringToBytes32(string memory source) public returns (bytes32 result)  {

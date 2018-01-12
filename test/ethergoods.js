@@ -64,7 +64,12 @@ contract('EtherGoods', function(accounts) {
 //  console.log('sha3')
 //  console.log(unique_hash)
 
-console.log( tokenContract )
+
+//canoe
+
+//7.3426930413956622283065143620738574142638959639431768834166324387693517887725e+76)
+
+
 
   await marketContract.setTokenContractAddress(accounts[0],tokenContract);
   await contract.setMarketContractAddress(accounts[0],marketContract);
@@ -74,7 +79,9 @@ console.log( tokenContract )
 
   var name_hash = ethUtil.bufferToHex(ethUtil.sha3("canoe"))
 
-  var good_type_record = await contract.goodTypes.call(name_hash);
+  var name_id = parseInt(name_hash)
+
+  var good_type_record = await contract.goodTypes.call(name_id);
 
   console.log("Record");
    console.log("Good Type: " + good_type_record);
