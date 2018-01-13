@@ -3,8 +3,14 @@ var TokenMarket = artifacts.require("./BasicNFTTokenMarket.sol");
 var EtherGoods = artifacts.require("./EtherGoods.sol");
 
 var ethUtil =  require('ethereumjs-util');
-var web3 =  require('web3');
+var web3utils =  require('web3-utils');
 var solidityHelper =  require('./solidity-helper');
+
+
+
+const Web3 = require('web3')
+// Instantiate new web3 object pointing toward an Ethereum node.
+let web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
 
 //https://web3js.readthedocs.io/en/1.0/web3-utils.html
 //https://medium.com/@valkn0t/3-things-i-learned-this-week-using-solidity-truffle-and-web3-a911c3adc730
@@ -23,16 +29,38 @@ contract('EtherGoods', function(accounts) {
 
 
 
-    await marketContract.setTokenContractAddress(accounts[0],tokenContract);
-    await contract.setMarketContractAddress(accounts[0],marketContract);
-    await contract.setTokenContractAddress(accounts[0],tokenContract);
+
+    await marketContract.setTokenContractAddress( tokenContract.address );
+    await contract.setMarketContractAddress( marketContract.address );
+    await contract.setTokenContractAddress(tokenContract.address );
+    await tokenContract.setMasterContractAddress( contract.address )
 
 
 
   }),
 
+
+  it("can spend coins  ", async function () {
+        var contract = await EtherGoods.deployed();
+
+        var ethBalance = await web3.eth.getBalance(accounts[0]);
+         console.log("Account 0 has " + ethBalance + " Wei");
+
+      console.log( web3utils.toWei('40','ether').toString() );
+
+      var result =   await contract.claimGoodTest( {value:web3utils.toWei('0.00001','ether').toString() } );
+
+
+
+
+
+    });
+
+
   it("can register a good", async function () {
 
+
+    await printBalances(accounts)
 
 //canoe
 
@@ -42,11 +70,19 @@ contract('EtherGoods', function(accounts) {
   var marketContract = await TokenMarket.deployed();
   var contract = await EtherGoods.deployed();
 
+console.log('contract')
 
-  await marketContract.setTokenContractAddress(accounts[0],tokenContract);
-  await contract.setMarketContractAddress(accounts[0],marketContract);
-  await contract.setTokenContractAddress(accounts[0],tokenContract);
-  await tokenContract.setMasterContractAddress(accounts[0],contract)
+
+console.log(contract.address)
+
+  await marketContract.setTokenContractAddress( tokenContract.address );
+  await contract.setMarketContractAddress( marketContract.address );
+  await contract.setTokenContractAddress(tokenContract.address );
+  await tokenContract.setMasterContractAddress( contract.address )
+
+
+  //assert.equal(true, contract.goods.call() );
+//  assert.equal(true,contract.hasTokenContract)
 
   var passName= "canoe";
 
@@ -55,7 +91,7 @@ contract('EtherGoods', function(accounts) {
   await contract.registerNewGoodType(passName,5,10);
 
   var passNameBytes32 = solidityHelper.stringToSolidityBytes32(passName)
-  const nameHash  = web3.utils.sha3(web3.utils.toHex(passNameBytes32), {encoding:"hex"});
+  const nameHash  = web3utils.sha3(web3utils.toHex(passNameBytes32), {encoding:"hex"});
 
   var good_type_record = await contract.goodTypes.call(nameHash);
 
@@ -67,24 +103,22 @@ contract('EtherGoods', function(accounts) {
 
   assert.equal(10, good_type_record[4].toNumber() ); //check price
 
-  var typeId =  web3.utils.toBN(good_type_record[0] );
+  var typeId =  web3utils.toBN(good_type_record[0] );
 
   console.log("typeId: " + typeId);
 
   //var result = contract.claimGood(typeId, {value: web3utils.toWei('1')});
 
+  var ethBalance = await web3.eth.getBalance(accounts[0]);
+   console.log("Account 0 has " + ethBalance + " Wei");
 
-var result =   await contract.claimGoodTest(typeId, {from: accounts[0],value:web3.utils.toWei('40') }, function(result){} )
+//console.log( web3utils.toWei('40','ether').toString() );
 
-  /*var dataBundle = contract.claimGood.getData(typeId)  ;
+var result =   await contract.claimGood(  typeId , function(){} ,{ value:web3utils.toWei('0.00001','ether') })
 
-  var result = await contract.sendTransaction({
-    to:contract,
-    data: dataBundle,
-    value: web3.utils.toWei('1'),
-  })*/
-
-  assert.equal(true, result );
+    console.log('last result ')
+  console.log(result)
+//  assert.equal(true, result );
 //  await contract.claimGood(typeId).send({from: '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe',value: 1000});//,{value: 1000}
 //  var token_record = await contract.goods.call(typeId);
 
@@ -190,3 +224,11 @@ var contract = await EtherGoods.deployed();
 
   */
 });
+
+
+async function printBalances(accounts) {
+  // accounts.forEach(function(ac, i) {
+     var balance_val = await (web3.eth.getBalance(accounts[0]));
+     console.log('acct 0 balance', web3utils.fromWei(balance_val.toString() , 'ether') )
+  // })
+ }

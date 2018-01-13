@@ -189,25 +189,35 @@ contract EtherGoods is Ownable {
   I am not putting the right typeId in this function !!!
   It should be a big number like 738237273283817...
 */
-    function claimGoodTest(uint256 typeId) public payable
+
+function claimGoodTest( ) public payable
+{
+if (msg.value < 4){revert();}
+}
+    function claimGoodWithTypeTest(uint256 typeId) public payable
 		{
-      GoodType memory goodType = goodTypes[typeId];// this is a pointer reference
+        GoodType memory goodType = goodTypes[typeId];// this is a pointer reference
 
       uint256 instanceId = goodType.nextSupplyIndexToSell;
 
         //prevent timing attack
-      goodTypes[typeId].nextSupplyIndexToSell++;
+
+    goodTypes[typeId].nextSupplyIndexToSell++;
 		    if(!goodType.initialized) revert(); //if the good isnt registered
 		      if(instanceId >= goodType.totalSupply) revert(); // the good is all claimed
 
 
           //why is the below reverting ?
           if (msg.value < goodType.claimPrice) revert();
-        //  if (goodType.claimPrice < 0) revert();
-        //  if (msg.value < 0) revert();
-        //  if (goods.exists(typeId, instanceId)) revert();
 
-      ClaimGood(msg.sender, typeId, goodType.nextSupplyIndexToSell );
+          if (msg.value < 4){revert();}
+
+
+         if (goodType.claimPrice < 0) revert();
+          if (msg.value < 0) revert();
+          if (goods.exists(typeId, instanceId)) revert();
+
+  //    ClaimGood(msg.sender, typeId, goodType.nextSupplyIndexToSell );
 
     }
        //uniqueHash =typeId
