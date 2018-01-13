@@ -40,22 +40,7 @@ contract('EtherGoods', function(accounts) {
   }),
 
 
-  it("can spend coins  ", async function () {
-        var contract = await EtherGoods.deployed();
-
-        var ethBalance = await web3.eth.getBalance(accounts[0]);
-         console.log("Account 0 has " + ethBalance + " Wei");
-
-      console.log( web3utils.toWei('40','ether').toString() );
-
-      var result =   await contract.claimGoodTest( {value:web3utils.toWei('0.00001','ether').toString() } );
-
-
-
-
-
-    });
-
+ 
 
   it("can register a good", async function () {
 
