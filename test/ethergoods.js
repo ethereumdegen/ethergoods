@@ -50,7 +50,9 @@ contract('EtherGoods', function(accounts) {
 
   var passName= "canoe";
 
-  await contract.registerNewGoodType(passName,5,400);
+
+  //this price is in ETHER ???
+  await contract.registerNewGoodType(passName,5,10);
 
   var passNameBytes32 = solidityHelper.stringToSolidityBytes32(passName)
   const nameHash  = web3.utils.sha3(web3.utils.toHex(passNameBytes32), {encoding:"hex"});
@@ -63,18 +65,16 @@ contract('EtherGoods', function(accounts) {
 
   assert.equal(true, good_type_record[7] ); //initialized
 
-  var typeIdHex = good_type_record[5];
+  assert.equal(10, good_type_record[4].toNumber() ); //check price
 
-  assert.equal('0x63616e6f65000000000000000000000000000000000000000000000000000000', typeIdHex);
-
-  var typeId =  web3.utils.toBN(typeIdHex);
+  var typeId =  web3.utils.toBN(good_type_record[0] );
 
   console.log("typeId: " + typeId);
 
   //var result = contract.claimGood(typeId, {value: web3utils.toWei('1')});
 
 
-var result =   await contract.claimGoodTest(typeId, {from: accounts[0],value:web3.utils.toWei('1') }, function(result){} )
+var result =   await contract.claimGoodTest(typeId, {from: accounts[0],value:web3.utils.toWei('40') }, function(result){} )
 
   /*var dataBundle = contract.claimGood.getData(typeId)  ;
 
