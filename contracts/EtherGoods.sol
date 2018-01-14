@@ -189,21 +189,75 @@ contract EtherGoods is Ownable {
   I am not putting the right typeId in this function !!!
   It should be a big number like 738237273283817...
 */
- 
+
+
+function claimGoodTestA( ) public payable
+{
+  if (msg.value < 0) revert();
+}
+
+
+
+function claimGoodTestB(uint256 typeId) public payable
+{
+//  GoodType memory goodType = goodTypes[typeId];// this is a pointer reference
+
+  uint256 instanceId = goodTypes[typeId].nextSupplyIndexToSell;
+
+    //prevent timing attack
+  goodTypes[typeId].nextSupplyIndexToSell++;
+  if(!goodTypes[typeId].initialized) revert(); //if the good isnt registered
+  if(instanceId >= goodTypes[typeId].totalSupply) revert(); // the good is all claimed
+
+}
+function claimGoodTestC(uint256 typeId) public payable
+{
+
+
+  uint256 instanceId = goodTypes[typeId].nextSupplyIndexToSell;
+
+    //prevent timing attack
+  goodTypes[typeId].nextSupplyIndexToSell++;
+  if(!goodTypes[typeId].initialized) revert(); //if the good isnt registered
+  if(instanceId >= goodTypes[typeId].totalSupply) revert(); // the good is all claimed
+
+  if (msg.value < goodTypes[typeId].claimPrice) revert();
+  if (goodTypes[typeId].claimPrice < 0) revert();
+  if (msg.value < 0) revert();
+
+}
+function claimGoodTestD(uint256 typeId) public payable
+{
+ // this is a pointer reference
+
+  uint256 instanceId = goodTypes[typeId].nextSupplyIndexToSell;
+
+    //prevent timing attack
+  goodTypes[typeId].nextSupplyIndexToSell++;
+  if(!goodTypes[typeId].initialized) revert(); //if the good isnt registered
+  if(instanceId >= goodTypes[typeId].totalSupply) revert(); // the good is all claimed
+
+  if (msg.value < goodTypes[typeId].claimPrice) revert();
+  if (goodTypes[typeId].claimPrice < 0) revert();
+  if (msg.value < 0) revert();
+
+    if (goods.exists(typeId, instanceId)) revert();
+}
+
        //uniqueHash =typeId
 		function claimGood(uint256 typeId) public payable
 		{
-      GoodType memory goodType = goodTypes[typeId];// this is a pointer reference
+    //  GoodType memory goodType = goodTypes[typeId];// this is a pointer reference
 
-      uint256 instanceId = goodType.nextSupplyIndexToSell;
+      uint256 instanceId = goodTypes[typeId].nextSupplyIndexToSell;
 
         //prevent timing attack
       goodTypes[typeId].nextSupplyIndexToSell++;
-			if(!goodType.initialized) revert(); //if the good isnt registered
-			if(instanceId >= goodType.totalSupply) revert(); // the good is all claimed
+			if(!goodTypes[typeId].initialized) revert(); //if the good isnt registered
+			if(instanceId >= goodTypes[typeId].totalSupply) revert(); // the good is all claimed
 
-      if (msg.value < goodType.claimPrice) revert();
-      if (goodType.claimPrice < 0) revert();
+      if (msg.value < goodTypes[typeId].claimPrice) revert();
+      if (goodTypes[typeId].claimPrice < 0) revert();
       if (msg.value < 0) revert();
       if (goods.exists(typeId, instanceId)) revert();
 
@@ -214,13 +268,13 @@ contract EtherGoods is Ownable {
 	    goods.claimGoodToken(msg.sender,goods.buildTokenId(typeId,instanceId),metadata);
 
       //Content creator gets claim eth
-      pendingWithdrawals[goodType.creator] += goodType.claimPrice;
+      pendingWithdrawals[goodTypes[typeId].creator] += goodTypes[typeId].claimPrice;
 
       //refund overspends
-      pendingWithdrawals[goodType.creator] += safesub(msg.value, goodType.claimPrice);
+      pendingWithdrawals[goodTypes[typeId].creator] += safesub(msg.value, goodTypes[typeId].claimPrice);
 
 
-			ClaimGood(msg.sender, typeId, goodType.nextSupplyIndexToSell );
+			ClaimGood(msg.sender, typeId, instanceId );
 
 
 		}
