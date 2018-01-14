@@ -225,6 +225,11 @@ function claimGoodTestC(uint256 typeId) public payable
   if (goodTypes[typeId].claimPrice < 0) revert();
   if (msg.value < 0) revert();
 
+    if (goods.exists(typeId, instanceId)) revert();
+
+      uint256 tokenId = goods.buildTokenId(typeId,instanceId); //success
+
+
 }
 function claimGoodTestD(uint256 typeId) public payable
 {
@@ -242,6 +247,10 @@ function claimGoodTestD(uint256 typeId) public payable
   if (msg.value < 0) revert();
 
     if (goods.exists(typeId, instanceId)) revert();
+
+      uint256 tokenId = goods.buildTokenId(typeId,instanceId);
+
+       goods.claimGoodToken(msg.sender, tokenId,  typeId  /* metadata */ ); //failure // dangerous high gas limit 
 }
 
        //uniqueHash =typeId
@@ -263,15 +272,15 @@ function claimGoodTestD(uint256 typeId) public payable
 
       //uint256 instanceId = goodType.nextSupplyIndexToSell;
 
+      uint256 tokenId = goods.buildTokenId(typeId,instanceId);
 
-      uint256 metadata = typeId;
-	    goods.claimGoodToken(msg.sender,goods.buildTokenId(typeId,instanceId),metadata);
+	    goods.claimGoodToken(msg.sender, tokenId,  typeId  /* metadata */ );
 
       //Content creator gets claim eth
       pendingWithdrawals[goodTypes[typeId].creator] += goodTypes[typeId].claimPrice;
 
       //refund overspends
-      pendingWithdrawals[goodTypes[typeId].creator] += safesub(msg.value, goodTypes[typeId].claimPrice);
+      pendingWithdrawals[msg.sender] += (msg.value - goodTypes[typeId].claimPrice);
 
 
 			ClaimGood(msg.sender, typeId, instanceId );
@@ -292,9 +301,5 @@ function claimGoodTestD(uint256 typeId) public payable
 
       }
 
-      function safesub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-      }
 
 }

@@ -33,14 +33,14 @@ contract('EtherGoods', function(accounts) {
     await marketContract.setTokenContractAddress( tokenContract.address );
     await contract.setMarketContractAddress( marketContract.address );
     await contract.setTokenContractAddress(tokenContract.address );
-    await tokenContract.setMasterContractAddress( contract.address )
+  //  await tokenContract.setMasterContractAddress( contract.address )
 
 
 
   }),
 
 
- 
+
 
   it("can register a good", async function () {
 
@@ -101,8 +101,16 @@ console.log(contract.address)
 
 var result =   await contract.claimGood(  typeId , function(){} ,{ value:web3utils.toWei('0.00001','ether') })
 
-    console.log('last result ')
-  console.log(result)
+//web3utils.keccak256(typeId + '|' + instanceId)
+
+  var instanceId = 0;
+  var token_id = await tokenContract.buildTokenId(typeId,instanceId,function(){})
+
+  var token_record = await tokenContract.tokenOwner(token_id);
+
+    console.log('token record ')
+      console.log(token_id)
+  console.log(token_record)
 //  assert.equal(true, result );
 //  await contract.claimGood(typeId).send({from: '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe',value: 1000});//,{value: 1000}
 //  var token_record = await contract.goods.call(typeId);
