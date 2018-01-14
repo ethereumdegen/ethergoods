@@ -186,72 +186,8 @@ contract EtherGoods is Ownable {
 		}
 
 /*
-  I am not putting the right typeId in this function !!!
-  It should be a big number like 738237273283817...
+  Make sure admin panel is all good!
 */
-
-
-function claimGoodTestA( ) public payable
-{
-  if (msg.value < 0) revert();
-}
-
-
-
-function claimGoodTestB(uint256 typeId) public payable
-{
-//  GoodType memory goodType = goodTypes[typeId];// this is a pointer reference
-
-  uint256 instanceId = goodTypes[typeId].nextSupplyIndexToSell;
-
-    //prevent timing attack
-  goodTypes[typeId].nextSupplyIndexToSell++;
-  if(!goodTypes[typeId].initialized) revert(); //if the good isnt registered
-  if(instanceId >= goodTypes[typeId].totalSupply) revert(); // the good is all claimed
-
-}
-function claimGoodTestC(uint256 typeId) public payable
-{
-
-
-  uint256 instanceId = goodTypes[typeId].nextSupplyIndexToSell;
-
-    //prevent timing attack
-  goodTypes[typeId].nextSupplyIndexToSell++;
-  if(!goodTypes[typeId].initialized) revert(); //if the good isnt registered
-  if(instanceId >= goodTypes[typeId].totalSupply) revert(); // the good is all claimed
-
-  if (msg.value < goodTypes[typeId].claimPrice) revert();
-  if (goodTypes[typeId].claimPrice < 0) revert();
-  if (msg.value < 0) revert();
-
-    if (goods.exists(typeId, instanceId)) revert();
-
-      uint256 tokenId = goods.buildTokenId(typeId,instanceId); //success
-
-
-}
-function claimGoodTestD(uint256 typeId) public payable
-{
- // this is a pointer reference
-
-  uint256 instanceId = goodTypes[typeId].nextSupplyIndexToSell;
-
-    //prevent timing attack
-  goodTypes[typeId].nextSupplyIndexToSell++;
-  if(!goodTypes[typeId].initialized) revert(); //if the good isnt registered
-  if(instanceId >= goodTypes[typeId].totalSupply) revert(); // the good is all claimed
-
-  if (msg.value < goodTypes[typeId].claimPrice) revert();
-  if (goodTypes[typeId].claimPrice < 0) revert();
-  if (msg.value < 0) revert();
-
-    if (goods.exists(typeId, instanceId)) revert();
-
-      uint256 tokenId = goods.buildTokenId(typeId,instanceId);
-
-       goods.claimGoodToken(msg.sender, tokenId,  typeId  /* metadata */ ); //failure // dangerous high gas limit 
-}
 
        //uniqueHash =typeId
 		function claimGood(uint256 typeId) public payable
