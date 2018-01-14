@@ -47,7 +47,7 @@ contract EtherGoods is Ownable {
 
 
     mapping (uint256 => GoodType) public goodTypes;
-
+    uint256[] public goodTypesIndex;
 
     // https://github.com/ethereum/eips/issues/721
     //mapping (bytes32 => Good) goods;
@@ -129,9 +129,14 @@ contract EtherGoods is Ownable {
          description: ""
         });
 
+      goodTypesIndex.push(typeId);
 
 			RegisterGood(msg.sender,typeId,goodTypeName,keccak256( goodTypeName ));
 		}
+
+    function getGoodTypesCount() public constant returns(uint count) {
+       return goodTypesIndex.length;
+     }
 
   /*  function stringToBytes32(string memory source) public returns (bytes32 result)  {
         assembly {
