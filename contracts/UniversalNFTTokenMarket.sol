@@ -5,7 +5,9 @@ import './BasicNFT.sol';
 
 import './BasicERC20.sol';
 
-contract UniversalNFTTokenMarket  {
+import './CustodialWalletInterface.sol';
+
+contract UniversalNFTTokenMarket {
 
   //address owner;
   BasicNFT public tokenContract;
@@ -17,7 +19,7 @@ contract UniversalNFTTokenMarket  {
   address public currencyToken;
   address public tokenWallet;
 
-  mapping (address => uint) public pendingWithdrawals;
+//mapping (address => uint) public pendingWithdrawals;
 
   event TransferSupply(uint256 indexed typeId,address indexed from, address indexed to, uint amount);
 
@@ -31,7 +33,7 @@ contract UniversalNFTTokenMarket  {
 
 
 /*
-  The use of LavaWallet as a token wallet allows for offchain 'approves' of the token currency to this contract
+  The use of LavaWallet/CustodialWalletInterface as a token wallet allows for offchain 'approves' of the token currency to this contract
 
 */
 
@@ -91,7 +93,7 @@ contract UniversalNFTTokenMarket  {
 
 
 
-  mapping(address => Bid[]) public bids;
+  //mapping(address => Bid[]) public bids;
 
   // A record of supplies that are offered for sale at a specific minimum value, and perhaps to a specific person
   //mapping (uint256 => Offer) public supplyOfferedForSale;
@@ -217,6 +219,19 @@ contract UniversalNFTTokenMarket  {
      require(msg.sender == tokenRegistry[tokenContract][tokenId].owner);
      require( BasicNFT(tokenContract).ownerOf(tokenId) == this);
      require( to != this );
+
+
+     Bid memory existing =  supplyBids[tokenContract][tokenId];
+     if (existing.value > 0 && existing.hasBid) {  ///if there is another active bid
+         // Refund the failing bid
+         //prevent re-entrancy
+         supplyBids[tokenContract][tokenId] = Bid(false, tokenContract, tokenId, 0x0, 0);
+         if (existing.hasBid == false) revert();
+         //pendingWithdrawals[existing.bidder] += existing.value;
+         require( CustodialWalletInterface(tokenWallet).transferTokens(existing.bidder,currencyToken,existing.value) );
+     }
+
+
      BasicNFT(tokenContract).transfer(to,tokenId);
      tokenRegistry[tokenContract][tokenId] = 0x0; //clear it out, not escrowed anymore
   }
@@ -224,8 +239,8 @@ contract UniversalNFTTokenMarket  {
   function addBid(address tokenContract, uint256 tokenId, uint256 amount) public {
      if(!tokenRegistered(tokenContract,tokenId)) revert();
 
-     //transfer the tokens into escrow into this contract and store this in the Bid object
-     require( LavaWallet(tokenWallet).transferTokensFrom(msg.sender,this,currencyToken,amount) );
+     //transfer the tokens into escrow assigned this contract in the wallet and store this in the Bid object
+     require( CustodialWalletInterface(tokenWallet).transferTokensFrom(msg.sender,this,currencyToken,amount) );
 
 
       if (amount == 0) revert();
@@ -235,64 +250,71 @@ contract UniversalNFTTokenMarket  {
           // Refund the failing bid
           //prevent re-entrancy
           supplyBids[tokenContract][tokenId] = Bid(false, tokenContract, tokenId, 0x0, 0);
+          if (existing.hasBid == false) revert();
           //pendingWithdrawals[existing.bidder] += existing.value;
-          require( LavaWallet(tokenWallet).transferTokens(existing.bidder,currencyToken,existing.value) );
-
+          require( CustodialWalletInterface(tokenWallet).transferTokens(existing.bidder,currencyToken,existing.value) );
       }
 
        supplyBids[tokenContract][tokenId] = Bid(true, tokenContract, tokenId, msg.sender, amount);
        SupplyBidAdded(tokenContract, tokenId, amount, msg.sender);
   }
 
-  function acceptBid(uint256 tokenId, uint256 minPrice) public {
+  function acceptBid(address tokenContract, uint256 tokenId, uint256 minPrice) public {
 
-      if(!tokenExists(tokenId)) revert();
+      if(!tokenRegistered(tokenContract,tokenId)) revert();
 
        address seller = msg.sender;
        Bid memory bid = supplyBids[tokenId];
       if(bid.bidder == msg.sender) revert(); //cant accept own bid
-      if(tokenContract.ownerOf(tokenId) != seller ) revert(); //must have balance of the token
+      if(getRegisteredTokenOwner(tokenContract,tokenId) != seller ) revert(); //must have token in escrow
       if (bid.value < minPrice) revert();
 
       //prevent re-entrancy
-      supplyBids[tokenId] = Bid(false, tokenId, 0x0, 0);
-      SupplyBidWithdrawn(tokenId, bid.value, msg.sender);
+      supplyBids[tokenId] = Bid(false, tokenContract, tokenId, 0x0, 0);
+      SupplyBidWithdrawn(tokenContract, tokenId, bid.value, msg.sender);
       if (bid.value == 0) revert();
 
-      tokenContract.approve(bid.bidder,tokenId);
-      tokenContract.transferFrom(seller,bid.bidder,tokenId);
+      //give the NFT to the buyer
+      BasicNFT(tokenContract).approve(bid.bidder,tokenId);
+      BasicNFT(tokenContract).transferFrom(seller,bid.bidder,tokenId);
       TransferSupply(tokenId, seller, bid.bidder, 1);
 
       //supplyOfferedForSale[tokenId] = Offer(false, tokenId, bid.bidder, 0, 0x0);
       //SupplyNoLongerForSale(tokenId);
 
-      uint256 amount = bid.value;
-
+      /*uint256 amount = bid.value;
       uint256 market_fee = safediv(amount,50);
-
       pendingWithdrawals[owner] += market_fee;
-      pendingWithdrawals[seller] += safesub(amount, market_fee);
+      pendingWithdrawals[seller] += safesub(amount, market_fee);*/
+
+      //give the currency to the seller within the custodial wallet
+      require( CustodialWalletInterface(tokenWallet).transferTokens(bid.bidder,currencyToken,bid.value) );
 
       //SupplyBought(tokenId, bid.value, seller, bid.bidder);
       SupplySold(tokenId, bid.value, seller, bid.bidder);
   }
 
-  function withdrawBidForSupply(uint256 tokenId) public {
-      if(!tokenExists(tokenId)) revert();
+
+  function withdrawBidForSupply(address tokenContract, uint256 tokenId) public {
+      if(!tokenRegistered(tokenContract,tokenId)) revert();
 
       Bid memory bid = supplyBids[tokenId];
 
       //prevent re-entrancy
-      supplyBids[tokenId] = Bid(false, tokenId, 0x0, 0);
+      supplyBids[tokenContract][tokenId] = Bid(false, tokenId, 0x0, 0);
       if (bid.hasBid == false) revert();
       if (bid.bidder != msg.sender) revert();
 
       // Refund the bid money
-      pendingWithdrawals[msg.sender] +=  bid.value;
+     //  pendingWithdrawals[msg.sender] +=  bid.value;
+      require( CustodialWalletInterface(tokenWallet).transferTokens(bid.bidder,currencyToken,bid.value) );
+
+
       SupplyBidWithdrawn(tokenId, bid.value, msg.sender);
   }
 
 
+/*
   function withdrawPendingBalance() public
   {
 
@@ -305,7 +327,7 @@ contract UniversalNFTTokenMarket  {
     msg.sender.transfer( amountToWithdraw );
 
   }
-
+*/
 
 
     function safemul(uint256 a, uint256 b) internal pure returns (uint256) {
