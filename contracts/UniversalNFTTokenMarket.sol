@@ -3,16 +3,19 @@ pragma solidity ^0.4.15;
 import './Ownable.sol';
 import './BasicNFT.sol';
 
-contract UniversalNFTTokenMarket is Ownable  {
+import './BasicERC20.sol';
 
-  address owner;
+contract UniversalNFTTokenMarket  {
+
+  //address owner;
   BasicNFT public tokenContract;
   //uint256 public ownerCut;
 
 
   //bool public hasTokenContract = false;
   //bool public lockTokenContract = false;
-
+  address public currencyToken;
+  address public tokenWallet;
 
   mapping (address => uint) public pendingWithdrawals;
 
@@ -27,7 +30,17 @@ contract UniversalNFTTokenMarket is Ownable  {
   event SupplyBidWithdrawn(uint256 indexed typeId, uint value, address indexed fromAddress);
 
 
+/*
+  The use of LavaWallet as a token wallet allows for offchain 'approves' of the token currency to this contract
 
+*/
+
+  constructor(address currencyTokenContract, address tokenWalletContract)
+  {
+    currencyToken = currencyTokenContract;
+    tokenWallet = tokenWalletContract;
+
+  }
 /*
   function setTokenContractAddress(address _address) external onlyOwner {
       if(lockTokenContract) revert();
@@ -198,32 +211,40 @@ contract UniversalNFTTokenMarket is Ownable  {
   }
 
   /*
-    It is assumed that this contract owns the token at this time
+
   */
   function withdrawToken(address tokenContract, uint tokenId, address to) public {
      require(msg.sender == tokenRegistry[tokenContract][tokenId].owner);
      require( BasicNFT(tokenContract).ownerOf(tokenId) == this);
+     require( to != this );
      BasicNFT(tokenContract).transfer(to,tokenId);
+     tokenRegistry[tokenContract][tokenId] = 0x0; //clear it out, not escrowed anymore
   }
 
-  function addBidForSupply(address tokenContract, uint256 tokenId) public payable {
-    if(!tokenExists(tokenId)) revert();
+  function addBid(address tokenContract, uint256 tokenId, uint256 amount) public {
+     if(!tokenRegistered(tokenContract,tokenId)) revert();
 
-      if (msg.value == 0) revert();
+     //transfer the tokens into escrow into this contract and store this in the Bid object
+     require( LavaWallet(tokenWallet).transferTokensFrom(msg.sender,this,currencyToken,amount) );
+
+
+      if (amount == 0) revert();
       Bid memory existing =  supplyBids[tokenContract][tokenId];
-      if (msg.value <= existing.value) revert(); //need to bid higher
+      if (amount <= existing.value) revert(); //need to bid higher
       if (existing.value > 0 && existing.hasBid) {  ///if there is another active bid
           // Refund the failing bid
           //prevent re-entrancy
           supplyBids[tokenContract][tokenId] = Bid(false, tokenContract, tokenId, 0x0, 0);
-          pendingWithdrawals[existing.bidder] += existing.value;
+          //pendingWithdrawals[existing.bidder] += existing.value;
+          require( LavaWallet(tokenWallet).transferTokens(existing.bidder,currencyToken,existing.value) );
+
       }
 
-       supplyBids[tokenContract][tokenId] = Bid(true, tokenContract, tokenId, msg.sender, msg.value);
-       SupplyBidAdded(tokenContract, tokenId, msg.value, msg.sender);
+       supplyBids[tokenContract][tokenId] = Bid(true, tokenContract, tokenId, msg.sender, amount);
+       SupplyBidAdded(tokenContract, tokenId, amount, msg.sender);
   }
 
-  function acceptBidForSupply(uint256 tokenId, uint256 minPrice) public {
+  function acceptBid(uint256 tokenId, uint256 minPrice) public {
 
       if(!tokenExists(tokenId)) revert();
 
