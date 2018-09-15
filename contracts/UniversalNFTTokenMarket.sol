@@ -3,7 +3,6 @@ pragma solidity ^0.4.15;
 import './Ownable.sol';
 import './BasicNFT.sol';
 
-import './BasicERC20.sol';
 
 import './CustodialWalletInterface.sol';
 
@@ -21,15 +20,15 @@ contract UniversalNFTTokenMarket {
 
 //mapping (address => uint) public pendingWithdrawals;
 
-  event TransferSupply(uint256 indexed typeId,address indexed from, address indexed to, uint amount);
+  event TransferSupply(address indexed tokenContract, uint256 indexed typeId,address from, address indexed to, uint amount);
 
   //event SupplyOffered(uint256 indexed typeId, uint minValue, address indexed toAddress);
-  event SupplyBidAdded(uint256 indexed typeId, uint value, address indexed fromAddress);
+  event SupplyBidAdded(address indexed tokenContract, uint256 indexed typeId, uint value, address fromAddress);
   //event SupplyBought(uint256 indexed typeId,  uint value, address fromAddress, address indexed toAddress);
-  event SupplySold(uint256 indexed typeId, uint value, address indexed fromAddress, address toAddress);
+  event SupplySold(address indexed tokenContract, uint256 indexed typeId, uint value, address fromAddress, address toAddress);
 
   //event SupplyNoLongerForSale(uint256 indexed typeId);
-  event SupplyBidWithdrawn(uint256 indexed typeId, uint value, address indexed fromAddress);
+  event SupplyBidWithdrawn(address indexed tokenContract, uint256 indexed typeId, uint value, address fromAddress);
 
 
 /*
@@ -106,7 +105,7 @@ contract UniversalNFTTokenMarket {
 
   //tokenId is the keccak of the typeId and instanceId
   function tokenExists(address tokenContract, uint tokenId) public view returns (bool) {
-     return tokenContract.tokenOwner(tokenId) != 0x0;
+     return BasicNFT(tokenContract).tokenOwner(tokenId) != 0x0;
   }
 
   /*
@@ -217,8 +216,8 @@ contract UniversalNFTTokenMarket {
   */
   function withdrawToken(address tokenContract, uint tokenId, address to) public {
      require(msg.sender == tokenRegistry[tokenContract][tokenId].owner);
-     require( BasicNFT(tokenContract).ownerOf(tokenId) == this);
-     require( to != this );
+     require( BasicNFT(tokenContract).ownerOf(tokenId) == address(this));
+     require( to != address(this) );
 
 
      Bid memory existing =  supplyBids[tokenContract][tokenId];
@@ -233,7 +232,7 @@ contract UniversalNFTTokenMarket {
 
 
      BasicNFT(tokenContract).transfer(to,tokenId);
-     tokenRegistry[tokenContract][tokenId] = 0x0; //clear it out, not escrowed anymore
+     tokenRegistry[tokenContract][tokenId] = NFCToken(0x0,0x0,0x0);  //clear it out, not escrowed anymore
   }
 
   function addBid(address tokenContract, uint256 tokenId, uint256 amount) public {
@@ -256,7 +255,7 @@ contract UniversalNFTTokenMarket {
       }
 
        supplyBids[tokenContract][tokenId] = Bid(true, tokenContract, tokenId, msg.sender, amount);
-       SupplyBidAdded(tokenContract, tokenId, amount, msg.sender);
+       emit SupplyBidAdded(tokenContract, tokenId, amount, msg.sender);
   }
 
   function acceptBid(address tokenContract, uint256 tokenId, uint256 minPrice) public {
@@ -264,20 +263,20 @@ contract UniversalNFTTokenMarket {
       if(!tokenRegistered(tokenContract,tokenId)) revert();
 
        address seller = msg.sender;
-       Bid memory bid = supplyBids[tokenId];
+       Bid memory bid = supplyBids[tokenContract][tokenId];
       if(bid.bidder == msg.sender) revert(); //cant accept own bid
       if(getRegisteredTokenOwner(tokenContract,tokenId) != seller ) revert(); //must have token in escrow
       if (bid.value < minPrice) revert();
 
       //prevent re-entrancy
-      supplyBids[tokenId] = Bid(false, tokenContract, tokenId, 0x0, 0);
-      SupplyBidWithdrawn(tokenContract, tokenId, bid.value, msg.sender);
+      supplyBids[tokenContract][tokenId] = Bid(false, tokenContract, tokenId, 0x0, 0);
+      emit SupplyBidWithdrawn(tokenContract, tokenId, bid.value, msg.sender);
       if (bid.value == 0) revert();
 
       //give the NFT to the buyer
       BasicNFT(tokenContract).approve(bid.bidder,tokenId);
       BasicNFT(tokenContract).transferFrom(seller,bid.bidder,tokenId);
-      TransferSupply(tokenId, seller, bid.bidder, 1);
+      emit TransferSupply(tokenContract, tokenId, seller, bid.bidder, 1);
 
       //supplyOfferedForSale[tokenId] = Offer(false, tokenId, bid.bidder, 0, 0x0);
       //SupplyNoLongerForSale(tokenId);
@@ -291,17 +290,17 @@ contract UniversalNFTTokenMarket {
       require( CustodialWalletInterface(tokenWallet).transferTokens(bid.bidder,currencyToken,bid.value) );
 
       //SupplyBought(tokenId, bid.value, seller, bid.bidder);
-      SupplySold(tokenId, bid.value, seller, bid.bidder);
+      emit SupplySold(tokenContract, tokenId, bid.value, seller, bid.bidder);
   }
 
 
   function withdrawBidForSupply(address tokenContract, uint256 tokenId) public {
       if(!tokenRegistered(tokenContract,tokenId)) revert();
 
-      Bid memory bid = supplyBids[tokenId];
+      Bid memory bid = supplyBids[tokenContract][tokenId];
 
       //prevent re-entrancy
-      supplyBids[tokenContract][tokenId] = Bid(false, tokenId, 0x0, 0);
+      supplyBids[tokenContract][tokenId] = Bid(false, tokenContract, tokenId, 0x0, 0);
       if (bid.hasBid == false) revert();
       if (bid.bidder != msg.sender) revert();
 
@@ -310,7 +309,7 @@ contract UniversalNFTTokenMarket {
       require( CustodialWalletInterface(tokenWallet).transferTokens(bid.bidder,currencyToken,bid.value) );
 
 
-      SupplyBidWithdrawn(tokenId, bid.value, msg.sender);
+      emit SupplyBidWithdrawn(tokenContract, tokenId, bid.value, msg.sender);
   }
 
 
