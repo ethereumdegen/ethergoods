@@ -312,22 +312,7 @@ contract UniversalNFTTokenMarket {
       emit SupplyBidWithdrawn(tokenContract, tokenId, bid.value, msg.sender);
   }
 
-
-/*
-  function withdrawPendingBalance() public
-  {
-
-    uint256 amountToWithdraw = pendingWithdrawals[msg.sender];
-
-    //prevent re-entrancy
-    pendingWithdrawals[msg.sender] = 0;
-    if( amountToWithdraw <= 0 ) revert();
-
-    msg.sender.transfer( amountToWithdraw );
-
-  }
-*/
-
+ 
 
     function safemul(uint256 a, uint256 b) internal pure returns (uint256) {
       if (a == 0) {
